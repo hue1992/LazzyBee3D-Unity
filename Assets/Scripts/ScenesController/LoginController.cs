@@ -3,13 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using Facebook.Unity;
 
 public class LoginController : MonoBehaviour {
 	public Text test;
 	// Use this for initialization
 	void Start () {
-		checkCurrentUser();
+		_checkCurrentUser();
 	}
 	
 	void Awake () {
@@ -66,7 +67,12 @@ public class LoginController : MonoBehaviour {
 	void handleSigninResult(UserInfo userInfo) {
 		Debug.Log("handleSigninResult");
 		if (userInfo != null && userInfo.userID != "") {
-			test.text = String.Format("fb login successfully :: {0}", userInfo.userID);
+//			test.text = String.Format("fb login successfully :: {0}", userInfo.userID);
+
+			Debug.Log(String.Format("fb login successfully :: {0}", userInfo.userID));
+			//load home screen
+			SceneManager.LoadScene("Home");
+
 		} else {
 			test.text = "fb login failed";
 		}
@@ -77,7 +83,11 @@ public class LoginController : MonoBehaviour {
 	public void OnLoginButtonAnonymousClick () {
 		FirebaseHelper.getInstance().loginAsAnnonymousUser(userInfo => {
 			if (userInfo != null && userInfo.userID != "") {
-				test.text = String.Format("Anonymous login successfully :: {0}", userInfo.userID);
+//				test.text = String.Format("Anonymous login successfully :: {0}", userInfo.userID);
+
+				Debug.Log(String.Format("Anonymous login successfully :: {0}", userInfo.userID));
+				//load home screen
+				SceneManager.LoadScene("Home");
 
 			} else {
 				test.text = "no anonymous signed in";
@@ -120,11 +130,12 @@ public class LoginController : MonoBehaviour {
 
 	}
 
-	public void checkCurrentUser () {
+	private void _checkCurrentUser () {
 		UserInfo userInfo = FirebaseHelper.getInstance().getCurrentUserInfo();
 
 		if (userInfo != null && userInfo.userID != "") {
-			test.text = String.Format("checkCurrentUser :: {0}", userInfo.userID);
+			//load home screen
+			SceneManager.LoadScene("Home");
 
 		} else {
 			test.text = "no user signed in";
