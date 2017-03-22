@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Facebook.Unity;
 
 public class HomeController : MonoBehaviour {
@@ -13,8 +14,9 @@ public class HomeController : MonoBehaviour {
 		if (FirebaseHelper.getInstance().checkLoginStatus() == false) {
 			Debug.Log("Not logged in");
 			//show login screen
-
+			SceneManager.LoadScene("Login", LoadSceneMode.Single);
 			//for testing => login facebook is default
+			/*
 			if (!FB.IsInitialized) {
 				// Initialize the Facebook SDK
 				FB.Init(InitCallback, OnHideUnity);
@@ -24,15 +26,16 @@ public class HomeController : MonoBehaviour {
 				Debug.Log("Already initialized, signal an app activation App Event");
 				FB.ActivateApp();
 			}
+			*/
 
 		} else {
 			Debug.Log("Logged in already");
 			//load today learning data
-			loadTodayData();
+			_loadTodayData();
 		}
 	}
 
-	public void loadTodayData () {
+	private void _loadTodayData () {
 		Debug.Log("loadTodayData");
 
 		int reviewCount = 0;
@@ -56,6 +59,7 @@ public class HomeController : MonoBehaviour {
 	}
 
 	/* for testing - begin */
+	/*
 	private void InitCallback () {
 		if (FB.IsInitialized) {
 			// Signal an app activation App Event
@@ -104,6 +108,7 @@ public class HomeController : MonoBehaviour {
 //		}
 
 	}
+	*/
 	/* for testing - end */
 
 	// Use this for initialization
