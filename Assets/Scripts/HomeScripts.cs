@@ -19,6 +19,8 @@ public class HomeScripts : MonoBehaviour
     public Button btnGame;
     public Button btnProfile;
 
+    public GameObject loginPanel;
+
     DatabaseReference mReference;
     FirebaseDatabase mDatabase;
     Firebase.Auth.FirebaseAuth mAuth;
@@ -100,15 +102,15 @@ public class HomeScripts : MonoBehaviour
     private void initButton()
     {
         //Button btn = yourButton.GetComponent<Button>();
-        Button btn_Study = btnStudy.GetComponent<Button>();
+       // Button btn_Study = btnStudy.GetComponent<Button>();
 
         Button btn_Home = btnHome.GetComponent<Button>();
         Button btn_Dictionary = btnDictionary.GetComponent<Button>();
         Button btn_Game = btnGame.GetComponent<Button>();
-        Button btn_Profile = btnProfile.GetComponent<Button>();
+        //Button btn_Profile = btnProfile.GetComponent<Button>();
 
 
-        btn_Study.onClick.AddListener(StudyClick);
+        //btn_Study.onClick.AddListener(StudyClick);
     
         btn_Home.onClick.AddListener(HomeClick);
 
@@ -116,12 +118,15 @@ public class HomeScripts : MonoBehaviour
 
         btn_Game.onClick.AddListener(GameClick);
 
-        btn_Profile.onClick.AddListener(ProfileClick);
+       // btn_Profile.onClick.AddListener(ProfileClick);
     }
 
-    private void ProfileClick()
+    public void ProfileClick()
     {
-       
+        if (loginPanel.activeInHierarchy == false)
+        {
+            loginPanel.SetActive(true);
+        }
     }
 
 
@@ -158,8 +163,8 @@ public class HomeScripts : MonoBehaviour
         string _ref = Shared.PUBLIC + Shared.DICTIONARY;
         Debug.Log("get user setting ref=" + _ref);
 
-        mDatabase.GetReference(_ref)
-            .EqualTo("categories", "0")
+        //mDatabase.GetReference(_ref)
+        //    .EqualTo("categories", "0")
         //.getvalueasync().continuewith(task =>
         //{
         //    if (task.iscompleted)
@@ -184,7 +189,8 @@ public class HomeScripts : MonoBehaviour
         //        debug.log("get my setting error");
         //    }
         //});
-        .ValueChanged += HandleValueChanged;
+
+       // .ValueChanged += HandleValueChanged;
 
 
 
@@ -239,11 +245,11 @@ public class HomeScripts : MonoBehaviour
         mReference.Child(_ref).SetRawJsonValueAsync(jsondefaultSettiing);
     }
 
-    void StudyClick()
+   public void StudyClick()
     {
         SceneManager.LoadScene("Study");
         //Check status study per day 
-        checkStatusLearn();
+      //  checkStatusLearn();
 
     }
 
