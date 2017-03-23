@@ -6,35 +6,6 @@ using Facebook.Unity;
 
 public class HomeController : MonoBehaviour {
 
-	void Awake () {
-		//check login status again
-		//if it is logged out due to some unknown reason 
-		//it could take time to complete this progress => show loading indicator
-		Debug.Log("checkLoginStatus");
-		if (FirebaseHelper.getInstance().checkLoginStatus() == false) {
-			Debug.Log("Not logged in");
-			//show login screen
-			SceneManager.LoadScene("Login", LoadSceneMode.Single);
-			//for testing => login facebook is default
-			/*
-			if (!FB.IsInitialized) {
-				// Initialize the Facebook SDK
-				FB.Init(InitCallback, OnHideUnity);
-
-			} else {
-				// Already initialized, signal an app activation App Event
-				Debug.Log("Already initialized, signal an app activation App Event");
-				FB.ActivateApp();
-			}
-			*/
-
-		} else {
-			Debug.Log("Logged in already");
-			//load today learning data
-			_loadTodayData();
-		}
-	}
-
 	private void _loadTodayData () {
 		Debug.Log("loadTodayData");
 
@@ -113,11 +84,46 @@ public class HomeController : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		
+		//check login status again
+		//if it is logged out due to some unknown reason 
+		//it could take time to complete this progress => show loading indicator
+		Debug.Log("checkLoginStatus");
+		if (FirebaseHelper.getInstance().checkLoginStatus() == false) {
+			Debug.Log("Not logged in");
+			//show login screen
+			SceneManager.LoadScene("Login", LoadSceneMode.Single);
+
+			//for testing => login facebook is default
+			/*
+			if (!FB.IsInitialized) {
+				// Initialize the Facebook SDK
+				FB.Init(InitCallback, OnHideUnity);
+
+			} else {
+				// Already initialized, signal an app activation App Event
+				Debug.Log("Already initialized, signal an app activation App Event");
+				FB.ActivateApp();
+			}
+			*/
+
+		} else {
+			Debug.Log("Logged in already");
+			//load today learning data
+			//get datetime in /newwords field, check if it is obsolete, prepare new list
+			//date in /newwords is always equal to /inreview
+			FirebaseHelper.getInstance().getCurrentDatetimeInNewWordsField(date => {
+				Debug.Log("getCurrentDatetimeInNewWordsField :: date :: " + date.ToString());
+
+				int curDate = DateTimeHelper.getBeginOfDayInSec();
+
+				if (date != curDate) {
+					_loadTodayData();
+				}
+			});
+		}
 	}
 	
-	// Update is called once per frame
-	void Update () {
-		
+	public void OnBtnStartClickHandle () {
+		SceneManager.LoadScene("Study", LoadSceneMode.Additive);
 	}
 }
