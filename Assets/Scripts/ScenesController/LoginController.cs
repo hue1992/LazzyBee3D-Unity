@@ -74,7 +74,7 @@ public class LoginController : MonoBehaviour {
 			SceneManager.LoadScene("Home");
 
 		} else {
-			test.text = "fb login failed";
+			test.text = "FB login failed";
 		}
 
 	}

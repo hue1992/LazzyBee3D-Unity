@@ -22,6 +22,7 @@ public class FirebaseHelper  {
 	private const string PROGRESS_INPROGRESS_KEY 	= "inprogress";
 	private const string PROGRESS_INREVIEW_KEY 		= "inreview";
 	private const string PROGRESS_NEWWORDS_KEY 		= "newwords";
+	private const string PROGRESS_AGAIN_KEY 		= "again";
 	private const string PROGRESS_CURRENT_STS_KEY 	= "current_status";
 
 	private const string PROGRESS_WORD_KEY 	= "words";
@@ -403,8 +404,8 @@ public class FirebaseHelper  {
 	}
 
 	//get information of a word
-	public void getWordInformation(string word, System.Action<WordInfo> callbackWhenDone) {
-		Debug.Log("FirebaseHelper :: getWordInformation");
+	public void fetchWordInformation(string word, System.Action<WordInfo> callbackWhenDone) {
+		Debug.Log("FirebaseHelper :: fetchWordInformation");
 
 		if (word.Length > 0) {
 			FirebaseDatabase.DefaultInstance
@@ -413,7 +414,7 @@ public class FirebaseHelper  {
 				.GetValueAsync().ContinueWith(task => {
 					if (task.IsFaulted) {
 						// Handle the error...
-						Debug.Log("getWordInformation :: task :: error" + task.ToString());
+						Debug.Log("fetchWordInformation :: task :: error" + task.ToString());
 						callbackWhenDone(null);
 
 					} else if (task.IsCompleted) {
@@ -535,7 +536,7 @@ public class FirebaseHelper  {
 				.GetValueAsync().ContinueWith(task => {
 					if (task.IsFaulted) {
 						// Handle the error...
-						Debug.Log("fetchWordUserLearningProgress :: task :: error" + task.ToString());
+						Debug.Log("getCurrentNewWordsList :: task :: error" + task.ToString());
 						callbackWhenDone(null);
 
 					} else if (task.IsCompleted) {
@@ -550,6 +551,98 @@ public class FirebaseHelper  {
 				});
 			
 		} else {
+			callbackWhenDone(null);
+		}
+	}
+
+	//get review list from /inreview field
+	//after open learning screen, get newwords list from "learning_progress/inreview"
+	public void getCurrentReviewList (System.Action<string[]> callbackWhenDone) {
+		if (signedIn == true) {
+			FirebaseDatabase.DefaultInstance
+				.GetReference(LEARNING_PROGRESS)
+				.Child(firebaseUser.UserId)
+				.Child(PROGRESS_INREVIEW_KEY)
+				.GetValueAsync().ContinueWith(task => {
+					if (task.IsFaulted) {
+						// Handle the error...
+						Debug.Log("getCurrentReviewList :: task :: error" + task.ToString());
+						callbackWhenDone(null);
+
+					} else if (task.IsCompleted) {
+						DataSnapshot snapshot = task.Result;
+						Debug.Log("snapshot :: " + snapshot.Key);
+
+						string worsString = snapshot.Child(PROGRESS_WORD_KEY).GetRawJsonValue();
+						string[] res = worsString.Split(',');
+
+						callbackWhenDone(res);
+					}
+				});
+
+		} else {
+			callbackWhenDone(null);
+		}
+	}
+
+	public void addAWordToAgainList (string word) {
+		if (signedIn == true) {
+
+			FirebaseDatabase.DefaultInstance
+				.GetReference(LEARNING_PROGRESS)
+				.Child(firebaseUser.UserId)
+				.Child(PROGRESS_AGAIN_KEY)
+				.GetValueAsync().ContinueWith(task => {
+					if (task.IsFaulted) {
+						// Handle the error...
+						Debug.Log("addAWordToAgainList :: task :: error" + task.ToString());
+
+					} else if (task.IsCompleted) {
+						DataSnapshot snapshot = task.Result;
+						Debug.Log("addAWordToAgainList :: " + snapshot.Key);
+						string againList = snapshot.GetRawJsonValue().Trim('"');
+						againList = String.Format("{0},{1}", againList, word);
+
+						Dictionary<string, object> newAgainList = new Dictionary<string, object> ();
+						newAgainList[PROGRESS_AGAIN_KEY] = againList;
+
+						FirebaseDatabase.DefaultInstance
+							.GetReference(LEARNING_PROGRESS)
+							.Child(firebaseUser.UserId)
+							.Child(PROGRESS_AGAIN_KEY)
+							.UpdateChildrenAsync(newAgainList);
+					}
+				});
+		} else {
+			Debug.Log("No user is signed in");
+		}
+	}
+
+	public void getAgainList (System.Action<string[]> callbackWhenDone) {
+		if (signedIn == true) {
+
+			FirebaseDatabase.DefaultInstance
+				.GetReference(LEARNING_PROGRESS)
+				.Child(firebaseUser.UserId)
+				.Child(PROGRESS_AGAIN_KEY)
+				.GetValueAsync().ContinueWith(task => {
+					if (task.IsFaulted) {
+						// Handle the error...
+						Debug.Log("getAgainList :: task :: error" + task.ToString());
+						callbackWhenDone(null);
+
+					} else if (task.IsCompleted) {
+						DataSnapshot snapshot = task.Result;
+						Debug.Log("getAgainList :: " + snapshot.Key);
+						string againList = snapshot.GetRawJsonValue().Trim('"');
+
+						string[] resList = againList.Split(',');
+
+						callbackWhenDone(resList);
+					}
+				});
+		} else {
+			Debug.Log("No user is signed in");
 			callbackWhenDone(null);
 		}
 	}
@@ -605,7 +698,7 @@ public class FirebaseHelper  {
 	}
 
 	//return wordprogress of a word
-	public void fetchWordUserLearningProgress(string word, System.Action<WordProgress> callbackWhenDone) {
+	public void fetchWordProgress(string word, System.Action<WordProgress> callbackWhenDone) {
 		if (signedIn == true) {
 			FirebaseDatabase.DefaultInstance
 				.GetReference(LEARNING_PROGRESS)
@@ -615,7 +708,7 @@ public class FirebaseHelper  {
 				.GetValueAsync().ContinueWith(task => {
 					if (task.IsFaulted) {
 						// Handle the error...
-						Debug.Log("fetchWordUserLearningProgress :: task :: error" + task.ToString());
+						Debug.Log("fetchWordProgress :: task :: error" + task.ToString());
 						callbackWhenDone(null);
 
 					} else if (task.IsCompleted) {
@@ -629,6 +722,28 @@ public class FirebaseHelper  {
 		} else {
 			callbackWhenDone(null);
 		}
+	}
+
+	public void fetchWordUserLearningInfo (string word, System.Action<UserLearning> callbackWhenDone) {
+		UserLearning userLearning = new UserLearning();
+
+		fetchWordInformation (word, wordInfo => {
+			if (wordInfo != null) {
+				userLearning.wordInfo = wordInfo;
+
+				fetchWordProgress(word, wordProgress => {
+					if (wordInfo != null) {
+						userLearning.wordProgress = wordProgress;
+
+					} else {
+						callbackWhenDone(null);
+					}
+				});
+
+			} else {
+				callbackWhenDone(null);
+			}
+		});
 	}
 
 	//call this function when starting app
@@ -732,7 +847,7 @@ public class FirebaseHelper  {
 				.GetValueAsync().ContinueWith(task => {
 					if (task.IsFaulted) {
 						// Handle the error...
-						Debug.Log("fetchWordUserLearningProgress :: task :: error" + task.ToString());
+						Debug.Log("_getCurrentDatetimeOfLearningProgress :: task :: error" + task.ToString());
 						callbackWhenDone(0);
 
 					} else if (task.IsCompleted) {
@@ -754,6 +869,7 @@ public class FirebaseHelper  {
 	//current_level
 	//current_word_index_lvxxx
 	//reserve in TemporarilyStatus
+	//call this functions before prepare newwords list and review list
 	public void getCurrentLearningWordIndex (System.Action<bool> callbackWhenDone) {
 		
 		if (signedIn == true) {
