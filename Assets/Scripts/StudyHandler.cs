@@ -11,11 +11,14 @@ public class StudyHandler : MonoBehaviour
     public Button btnHard;
     public Button btnNormal;
     public Button btnEasy;
+    public string htmlText;
 
     void Start()
     {
         handlerButton();
-        getUserData();          
+        getUserData();
+
+        LoadFromText();        
     }
 
  
@@ -80,5 +83,30 @@ public class StudyHandler : MonoBehaviour
         //    }
         //});
 
+    }
+
+    UniWebView CreateWebView()
+    {
+        var webViewGameObject = GameObject.Find("WebView");
+        if (webViewGameObject == null)
+        {
+            webViewGameObject = new GameObject("WebView");
+        }
+
+        var webView = webViewGameObject.AddComponent<UniWebView>();
+
+        webView.toolBarShow = true;
+        return webView;
+    }
+
+    public void LoadFromText()
+    {
+        var webView = CreateWebView();
+
+        webView.LoadHTMLString(htmlText, null);
+        webView.backButtonEnable = false;      
+        webView.insets.top = 200;
+        webView.insets.bottom = 180;
+        webView.Show();
     }
 }
