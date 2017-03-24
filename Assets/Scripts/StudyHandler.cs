@@ -31,9 +31,7 @@ public class StudyHandler : MonoBehaviour
 
     void Start() {
         handlerButton();
-        getUserData();
-
-        LoadFromText();        
+        getUserData();     
     }
 
 	void Update() {
@@ -162,9 +160,11 @@ public class StudyHandler : MonoBehaviour
 			//show alert: no word to learn
 
 			//close screen
+			Debug.Log("UnloadSceneAsync(\"Study\")");
 			SceneManager.UnloadSceneAsync("Study");
 
 		} else {
+			Debug.Log("fetchWordUserLearningInfo");
 			//fetch word info and learning progress
 			fetchWordUserLearningInfo();
 		}
@@ -175,6 +175,9 @@ public class StudyHandler : MonoBehaviour
 			FirebaseHelper.getInstance().fetchWordUserLearningInfo(currentWord, userLearning => {
 				if (userLearning != null) {
 					wordUserLearning = userLearning;
+
+					htmlText = HTMLHelper.createHTMLForQuestion(wordUserLearning.wordInfo);
+					LoadFromText();
 
 				} else {
 					wordUserLearning = null;

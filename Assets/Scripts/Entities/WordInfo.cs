@@ -10,7 +10,8 @@ public class WordInfo  {
 	public string pronoun;
 	public string subcats;
 	public string l_vn;
-	public string l_en;	
+	public string l_en;
+	public string usernote;
 	public MeaningInfo common;
 	public MeaningInfo toeic;
 	public MeaningInfo economy;

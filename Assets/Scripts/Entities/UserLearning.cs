@@ -8,7 +8,7 @@ public class UserLearning {
 	public WordProgress wordProgress;
 
 	public UserLearning () {
-		wordInfo = null;
-		wordProgress = null;
+		wordInfo 		= null;
+		wordProgress 	= null;
 	}
 }
