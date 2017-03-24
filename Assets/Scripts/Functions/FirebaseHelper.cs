@@ -114,6 +114,7 @@ public class FirebaseHelper  {
 
 	/**************** functions for USERS *****************/
 	public void loginAsAnnonymousUser(System.Action<UserInfo> callbackWhenDone) {
+		Debug.Log("loginAsAnnonymousUser");
 
 		if (signedIn == false) {	//only allow to login if it is not logged in
 			auth.SignInAnonymouslyAsync().ContinueWith(task => {
@@ -543,10 +544,18 @@ public class FirebaseHelper  {
 						DataSnapshot snapshot = task.Result;
 						Debug.Log("snapshot :: " + snapshot.Key);
 
-						string worsString = snapshot.Child(PROGRESS_WORD_KEY).GetRawJsonValue();
-						string[] res = worsString.Split(',');
+						string worsString = snapshot.Child(PROGRESS_WORD_KEY).GetRawJsonValue().Trim('"');
+						Debug.Log("worsString :: " + worsString);
 
-						callbackWhenDone(res);
+						if (worsString != null && worsString.Length > 0) {
+							string[] res = worsString.Split(',');
+							Debug.Log("worsString :: res :: " + res);
+							callbackWhenDone(res);
+
+						} else {
+							callbackWhenDone(null);
+						}
+
 					}
 				});
 			
@@ -838,7 +847,7 @@ public class FirebaseHelper  {
 	//get datetime in /newwords or /inreview (to check whether data is obsolete or not)
 	//fieldPath = "newwords" or "inreview"
 	private void _getCurrentDatetimeOfLearningProgress (string fieldPath, System.Action<int> callbackWhenDone) {
-
+		Debug.Log("_getCurrentDatetimeOfLearningProgress");
 		if (signedIn == true) {
 			FirebaseDatabase.DefaultInstance
 				.GetReference(LEARNING_PROGRESS)
@@ -852,11 +861,26 @@ public class FirebaseHelper  {
 
 					} else if (task.IsCompleted) {
 						DataSnapshot snapshot = task.Result;
-						Debug.Log("snapshot :: " + snapshot.Key);
+						Debug.Log("_getCurrentDatetimeOfLearningProgress :: snapshot :: " + snapshot.Key);
 
-						int date = Int32.Parse(snapshot.Child(PROGRESS_DATE_KEY).GetRawJsonValue());
+						string strDate = snapshot.Child(PROGRESS_DATE_KEY).GetRawJsonValue();
+						Debug.Log("_getCurrentDatetimeOfLearningProgress :: PROGRESS_DATE_KEY :: " + strDate);
 
-						callbackWhenDone(date);
+						if (strDate != null && strDate.Length > 0) {
+							int date = Int32.Parse(snapshot.Child(PROGRESS_DATE_KEY).GetRawJsonValue());
+
+							Debug.Log("_getCurrentDatetimeOfLearningProgress :: date :: " + date);
+
+							callbackWhenDone(date);
+
+						} else {
+							callbackWhenDone(0);
+						}
+
+					} else {
+
+						callbackWhenDone(0);
+						Debug.Log("_getCurrentDatetimeOfLearningProgress :: failed");
 					}
 				});
 

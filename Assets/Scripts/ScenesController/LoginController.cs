@@ -14,6 +14,7 @@ public class LoginController : MonoBehaviour {
 	}
 	
 	void Awake () {
+		FirebaseHelper.getInstance();
 		if (!FB.IsInitialized) {
 			// Initialize the Facebook SDK
 			FB.Init(InitCallback, OnHideUnity);
@@ -134,6 +135,7 @@ public class LoginController : MonoBehaviour {
 		UserInfo userInfo = FirebaseHelper.getInstance().getCurrentUserInfo();
 
 		if (userInfo != null && userInfo.userID != "") {
+			Debug.Log(String.Format("Logged in already :: {0}", userInfo.userID));
 			//load home screen
 			SceneManager.LoadScene("Home");
 

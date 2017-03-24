@@ -83,7 +83,7 @@ public class HomeController : MonoBehaviour {
 	/* for testing - end */
 
 	// Use this for initialization
-	void Start () {
+	void Start() {
 		//check login status again
 		//if it is logged out due to some unknown reason 
 		//it could take time to complete this progress => show loading indicator

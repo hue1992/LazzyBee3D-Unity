@@ -12,6 +12,8 @@ public class TemporarilyStatus {
 	public int auto_play_sound		= CommonDefine.SETTINGS_AUTO_PLAY;		//0 or 1
 	public int notification			= CommonDefine.SETTINGS_NOTIFICATION;	//0 or 1
 
+	public float speaking_speed	= 0.5f;
+
 	private static TemporarilyStatus _instance = null;
 
 	public static TemporarilyStatus getInstance() {
