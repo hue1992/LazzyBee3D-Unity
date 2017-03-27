@@ -19,4 +19,8 @@ public class WordInfo  {
 	public MeaningInfo ielts;
 	public MeaningInfo science;
 	public MeaningInfo medicine;
+
+	public WordInfo () {
+		word = "";
+	}
 }

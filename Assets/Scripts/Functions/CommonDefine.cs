@@ -21,8 +21,8 @@ public class CommonDefine {
 	public const int FORGET_FINE 		= 300;
 	public const int DEFAULT_EFACTOR	= 2500;
 
-	public const string STR_TIME_LEARN_AGAIN = "10min";
-	public const int TIME_LEARN_AGAINE 	= 600;	//10 mins
+	public const string STR_TIME_LEARN_AGAIN	= "10min";
+	public const int TIME_LEARN_AGAIN		 	= 600;	//10 mins
 
 	//default settings
 	public const int SETTINGS_DEFAULT_LEVEL 	= 1;
