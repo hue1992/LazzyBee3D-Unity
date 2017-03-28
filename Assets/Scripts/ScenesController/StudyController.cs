@@ -18,7 +18,7 @@ public class StudyController : MonoBehaviour
 	private List<string> reviewWords = new List<string>();
 
 	private CURRENT_LIST_NAME curListName = CURRENT_LIST_NAME.LIST_REVIEW;
-	private int currentWordInd = 0;
+	private int currentWordInd = 0;		//always keep it = 0
 	private string currentWord = "";
 	private UserLearning wordUserLearning = null;
 
@@ -32,7 +32,7 @@ public class StudyController : MonoBehaviour
 
     void Start() {
         handlerButton();
-        getUserData();     
+        getUserData();
     }
 
 	void Update() {
@@ -68,22 +68,41 @@ public class StudyController : MonoBehaviour
     void AgainClick()
     {
 		//update word with again option
+		FirebaseHelper.getInstance()
+			.updateWordProgressWithEaseOption(currentWord,
+											wordUserLearning.wordProgress,
+											CommonDefine.OPTION_AGAIN);
 
-        endSessionStudy();
+		endSessionStudy();
     }
     void HardClick()
     {
 		//update word with hard option
+		FirebaseHelper.getInstance()
+			.updateWordProgressWithEaseOption(currentWord,
+				wordUserLearning.wordProgress,
+				CommonDefine.OPTION_HARD);
+		
         endSessionStudy();
     }
     void NormalClick()
     {
 		//update word with normal option
+		FirebaseHelper.getInstance()
+			.updateWordProgressWithEaseOption(currentWord,
+				wordUserLearning.wordProgress,
+				CommonDefine.OPTION_GOOD);
+		
         endSessionStudy();
     }
     void EasyClick()
     {
 		//update word with easy option
+		FirebaseHelper.getInstance()
+			.updateWordProgressWithEaseOption(currentWord,
+				wordUserLearning.wordProgress,
+				CommonDefine.OPTION_EASY);
+		
         endSessionStudy();
     }
 
@@ -93,6 +112,10 @@ public class StudyController : MonoBehaviour
         btnShowAnswer.interactable = true;
         ButtonAnswer.SetActive(false);
 		bool needRemoveWord = true;
+
+		currentWordInd = 0;
+		currentWord = "";
+		wordUserLearning = null;
 
 		if (curListName == CURRENT_LIST_NAME.LIST_REVIEW) {
 			if (needRemoveWord == true) {
@@ -105,7 +128,7 @@ public class StudyController : MonoBehaviour
 				currentWordInd = 0;
 
 			} else {
-				currentWordInd++;
+//				currentWordInd++;	//always get item at 0 because we remove words after learn them
 				currentWord = reviewWords.ElementAt(currentWordInd);
 			}
 
@@ -122,7 +145,7 @@ public class StudyController : MonoBehaviour
 				currentWordInd = 0;
 
 			} else {
-				currentWordInd++;
+//				currentWordInd++;
 				currentWord = againWords.ElementAt(currentWordInd);
 			}
 
@@ -141,12 +164,14 @@ public class StudyController : MonoBehaviour
 				//close study screen
 				SceneManager.UnloadSceneAsync("Study");
 			} else {
-				currentWordInd++;
+//				currentWordInd++;
 				currentWord = newWords.ElementAt(currentWordInd);
 			}
 		}
 
-		fetchWordUserLearningInfo();
+		if (currentWord.Length > 0) {
+			fetchWordUserLearningInfo();
+		}
     }
 
 
@@ -156,6 +181,7 @@ public class StudyController : MonoBehaviour
 		//just load them
 		currentWordInd = 0;
 		currentWord = "";
+		wordUserLearning = null;
 
 		reviewWords.Clear();
 		againWords.Clear();
@@ -166,59 +192,69 @@ public class StudyController : MonoBehaviour
 
 		FirebaseHelper.getInstance().getCurrentReviewList(rwords => {
 			reviewWords.AddRange(rwords);
-			Debug.Log("reviewWords :: count :: " + reviewWords.Count);
+
 
 			FirebaseHelper.getInstance().getAgainList(agwords => {
 				againWords.AddRange(agwords);
-				Debug.Log("againWords :: count :: " + againWords.Count);
+
 
 				FirebaseHelper.getInstance().getCurrentNewWordsList(nwords => {
 					newWords.AddRange(nwords);
+
+					Debug.Log("reviewWords :: count :: " + reviewWords.Count);
+					Debug.Log("againWords :: count :: " + againWords.Count);
 					Debug.Log("newWords :: count :: " + newWords.Count);
+
+					if (reviewWords.Count > 0) {
+						Debug.Log("reviewWords :: " + reviewWords);
+						curListName  = CURRENT_LIST_NAME.LIST_REVIEW;
+						currentWord = reviewWords.ElementAt(currentWordInd);
+						found = true;
+
+					} else if (againWords.Count > 0) {
+						Debug.Log("againWords :: " + againWords);
+						curListName  = CURRENT_LIST_NAME.LIST_AGAIN;
+						currentWord = againWords.ElementAt(currentWordInd);
+						found = true;
+
+					} else if (newWords.Count > 0) {
+						Debug.Log("newWords :: " + newWords);
+						curListName  = CURRENT_LIST_NAME.LIST_NEW;
+						currentWord = newWords.ElementAt(currentWordInd);
+						found = true;
+					}
+
+					if (found == false) {
+						//show alert: no word to learn
+
+						//close screen
+						Debug.Log("UnloadSceneAsync(\"Study\")");
+						SceneManager.UnloadSceneAsync("Study");
+
+					} else {
+						//fetch word info and learning progress
+						fetchWordUserLearningInfo();
+					}
+
 				});
-
-				if (reviewWords.Count > 0) {
-					Debug.Log("reviewWords :: " + reviewWords);
-					curListName  = CURRENT_LIST_NAME.LIST_REVIEW;
-					currentWord = reviewWords.ElementAt(currentWordInd);
-					found = true;
-
-				} else if (againWords.Count > 0) {
-					Debug.Log("againWords :: " + againWords);
-					curListName  = CURRENT_LIST_NAME.LIST_AGAIN;
-					currentWord = againWords.ElementAt(currentWordInd);
-					found = true;
-
-				} else if (newWords.Count > 0) {
-					Debug.Log("newWords :: " + newWords);
-					curListName  = CURRENT_LIST_NAME.LIST_NEW;
-					currentWord = newWords.ElementAt(currentWordInd);
-					found = true;
-				}
-
-				if (found == false) {
-					//show alert: no word to learn
-
-					//close screen
-					Debug.Log("UnloadSceneAsync(\"Study\")");
-					SceneManager.UnloadSceneAsync("Study");
-
-				} else {
-					//fetch word info and learning progress
-					fetchWordUserLearningInfo();
-				}
 			});
 		});
     }
 
 	private void fetchWordUserLearningInfo() {
 		Debug.Log("fetchWordUserLearningInfo :: " +currentWord);
+
 		if (currentWord.Length > 0) {
 			FirebaseHelper.getInstance().fetchWordUserLearningInfo(currentWord, userLearning => {
 				if (userLearning.wordInfo != null) {
+					Debug.Log("fetchWordUserLearningInfo :: display HTML");
 					wordUserLearning = userLearning;
 
+					Debug.Log("wordUserLearning :: wordInfo.word :: " +wordUserLearning.wordInfo.word);
+
 					htmlText = HTMLHelper.createHTMLForQuestion(wordUserLearning.wordInfo);
+
+					Debug.Log("fetchWordUserLearningInfo :: htmlText :: " +htmlText);
 					LoadFromText();
 
 				} else {
@@ -249,20 +285,29 @@ public class StudyController : MonoBehaviour
     UniWebView CreateWebView()
     {
         var webViewGameObject = GameObject.Find("WebView");
-        if (webViewGameObject == null)
-        {
+		UniWebView webView = null;
+
+        if (webViewGameObject == null) {
             webViewGameObject = new GameObject("WebView");
-        }
 
-        var webView = webViewGameObject.AddComponent<UniWebView>();
+			webView = webViewGameObject.AddComponent<UniWebView>();
 
-        webView.toolBarShow = true;
+		} else {
+			webView = webViewGameObject.GetComponent<UniWebView>();
+
+			if (webView == null) {
+				webView = webViewGameObject.AddComponent<UniWebView>();
+			}
+		}
+
+        webView.toolBarShow = false;
+//		webView.SetShowSpinnerWhenLoading(false);	//un-comment after have loading indicator
         return webView;
     }
 
     public void LoadFromText()
     {
-        var webView = CreateWebView();
+		UniWebView webView = CreateWebView();
 
         webView.LoadHTMLString(htmlText, null);
         webView.backButtonEnable = false;      

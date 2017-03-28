@@ -824,6 +824,7 @@ public class FirebaseHelper  {
 
 					fetchWordProgress(word, wordProgress => {
 						if (wordProgress.e_fact > 0) {
+							Debug.Log("fetchWordUserLearningInfo :: successfully");
 							userLearning.wordProgress = wordProgress;
 
 							callbackWhenDone(userLearning);
