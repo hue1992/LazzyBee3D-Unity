@@ -63,6 +63,7 @@ public class StudyController : MonoBehaviour
         btnShowAnswer.interactable = false;
         ButtonAnswer.SetActive(true);
 
+		loadAnswer();
     }
 
     void AgainClick()
@@ -121,6 +122,8 @@ public class StudyController : MonoBehaviour
 			if (needRemoveWord == true) {
 				reviewWords.RemoveAt(currentWordInd);
 				needRemoveWord = false;
+
+				FirebaseHelper.getInstance().updateInreviewFieldInLearningProgressToday(reviewWords.ToArray());
 			}
 
 			if (reviewWords.Count == 0) {
@@ -138,6 +141,8 @@ public class StudyController : MonoBehaviour
 			if (needRemoveWord == true) {
 				againWords.RemoveAt(currentWordInd);
 				needRemoveWord = false;
+
+				FirebaseHelper.getInstance().updateAgainList(againWords.ToArray());
 			}
 
 			if (againWords.Count == 0) {
@@ -155,6 +160,8 @@ public class StudyController : MonoBehaviour
 			if (needRemoveWord == true) {
 				newWords.RemoveAt(currentWordInd);
 				needRemoveWord = false;
+
+				FirebaseHelper.getInstance().updateNewWordsFieldInLearningProgressToday(newWords.ToArray());
 			}
 
 			if (newWords.Count == 0) {
@@ -252,10 +259,7 @@ public class StudyController : MonoBehaviour
 
 					Debug.Log("wordUserLearning :: wordInfo.word :: " +wordUserLearning.wordInfo.word);
 
-					htmlText = HTMLHelper.createHTMLForQuestion(wordUserLearning.wordInfo);
-
-					Debug.Log("fetchWordUserLearningInfo :: htmlText :: " +htmlText);
-					LoadFromText();
+					loadQuestion();
 
 				} else {
 					wordUserLearning = null;
@@ -266,8 +270,6 @@ public class StudyController : MonoBehaviour
 			endSessionStudy();
 		}
 	}
-
-
 
 	private string[] removeBlankItems (string[] arr) {
 		List<string> resList = new List<string>();
@@ -282,8 +284,21 @@ public class StudyController : MonoBehaviour
 		return resList.ToArray();
 	}
 
-    UniWebView CreateWebView()
-    {
+	private void loadQuestion () {
+		htmlText = HTMLHelper.createHTMLForQuestion(wordUserLearning.wordInfo);
+
+		Debug.Log("fetchWordUserLearningInfo :: htmlText :: " +htmlText);
+		LoadFromText();
+	}
+
+	private void loadAnswer () {
+		htmlText = HTMLHelper.createHTMLForAnswer(wordUserLearning.wordInfo);
+
+		Debug.Log("fetchWordUserLearningInfo :: htmlText :: " +htmlText);
+		LoadFromText();
+	}
+
+    UniWebView CreateWebView() {
         var webViewGameObject = GameObject.Find("WebView");
 		UniWebView webView = null;
 
