@@ -71,7 +71,7 @@ public class Algorithm {
  	*/
 	private int nextIntervalBySecondsWithEaseOption(WordProgress wordProgress, int easeOption) {
 		if (easeOption == CommonDefine.OPTION_AGAIN) {
-			return CommonDefine.TIME_LEARN_AGAINE; /*10 minute*/
+			return CommonDefine.TIME_LEARN_AGAIN; /*10 minute*/
 		}
 
 		return (nextIntervalByDaysWithEaseOption(wordProgress, easeOption) * CommonDefine.SECONDS_PERDAY);

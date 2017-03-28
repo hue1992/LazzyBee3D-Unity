@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 
 public class TemporarilyStatus {
-	public int current_level = CommonDefine.SETTINGS_DEFAULT_LEVEL;	//current level, even if my_level is 2, current_level could be 3 when user leaerned all words in level 2
-	public int current_word_index = 0;
+	public int current_level 		= CommonDefine.SETTINGS_DEFAULT_LEVEL;	//current level, even if my_level is 2, current_level could be 3 when user leaerned all words in level 2
+	public int current_word_index 	= 0;
 
 	public int my_level 			= CommonDefine.SETTINGS_DEFAULT_LEVEL;	//set in settings
 	public int new_card_a_day 		= CommonDefine.SETTINGS_NEWCARD_A_DAY;
@@ -12,7 +12,7 @@ public class TemporarilyStatus {
 	public int auto_play_sound		= CommonDefine.SETTINGS_AUTO_PLAY;		//0 or 1
 	public int notification			= CommonDefine.SETTINGS_NOTIFICATION;	//0 or 1
 
-	public float speaking_speed	= 0.5f;
+	public float speaking_speed		= 1.0f;
 
 	private static TemporarilyStatus _instance = null;
 
