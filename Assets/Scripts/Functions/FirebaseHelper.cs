@@ -453,57 +453,6 @@ public class FirebaseHelper  {
 			callbackWhenDone(null);
 		}
 	}
-		
-	/* temporarile do not these funcions
-	public void prepareListNewWordsToLearn (int limit, System.Action<int> callbackWhenDone) {
-		Debug.Log("FirebaseHelper :: prepareListNewWordsToLearn");
-		if (limit > 20) {	//due to limited quota
-			limit = 20;
-		}
-
-		_getListNewWordsToLearn(limit, words => {
-			int date = DateTimeHelper.getBeginOfDayInSec();
-			updateNewWordsFieldInLearningProgress(words, date);
-
-			callbackWhenDone(words.Length);
-		});
-	}
-		
-	private void _getListNewWordsToLearn (int limit, System.Action<string[]> callbackWhenDone) {
-		Debug.Log("FirebaseHelper :: _getListNewWordsToLearn");
-		if (limit > 20) {	//due to limited quota
-			limit = 20;
-		}
-
-		FirebaseDatabase.DefaultInstance
-			.GetReference(DICTIONARY)
-			.OrderByChild("queue")
-			.EqualTo(CommonDefine.QUEUE_UNKNOWN)
-			.LimitToFirst(limit)
-			.GetValueAsync().ContinueWith(task => {
-				if (task.IsFaulted) {
-					// Handle the error...
-					Debug.Log("getListWords :: task :: error" + task.ToString());
-					callbackWhenDone(null);
-
-				} else if (task.IsCompleted) {
-					DataSnapshot snapshot = task.Result;
-					List<string> wordsList = new List<string>();
-					// Do something with snapshot...
-					Debug.Log("snapshot.Children :: count :: " + snapshot.ChildrenCount);
-					foreach (var item in snapshot.Children) {
-						Debug.Log("snapshot.Children :: " + item.Key);
-
-						updateQueueForWordInDictionary(item.Key, CommonDefine.QUEUE_NEW_WORD);
-
-						wordsList.Add(item.Key);
-					}
-
-					callbackWhenDone(wordsList.ToArray());
-				}
-			});
-	}
-	*/
 
 	//update words in DICTIONARY (update queue)
 	public void updateQueueForWordInDictionary(string word, int newQueue) {
@@ -522,11 +471,11 @@ public class FirebaseHelper  {
 	/**************** functions for LEARNING_PROGRESS *****************/
 
 	//update newwords for a user in LEARNING_PROGRESS
-	public bool updateNewWordsFieldInLearningProgress(string[] words, int date) {
+	private bool _updateNewWordsFieldInLearningProgress(string[] words, int date) {
 		bool res = false;
 		//refer to the word them update its queue field
 		if (signedIn == true) {
-			if (date > 0) {
+			if (words != null && date > 0) {
 				Dictionary<string, object> newwordsUpdate = new Dictionary<string, object> ();
 				newwordsUpdate[PROGRESS_WORD_KEY] = String.Join(",", words);
 				newwordsUpdate[PROGRESS_DATE_KEY] = date;
@@ -546,6 +495,53 @@ public class FirebaseHelper  {
 		}
 
 		return res;
+	}
+
+	//call this function when remove word from queue (when tapping on 4 buttons)
+	public void updateNewWordsFieldInLearningProgressToday (string[] words) {
+
+		if (words != null) {
+			getCurrentDatetimeInNewWordsField(oldDate => {
+				//when user still learning with old data (yesterday data..)
+				//still update list words for old date
+				//when user finish learning (with old date or new date), check this date to count streak
+				if (oldDate > 0) {
+					Dictionary<string, object> newwordsUpdate = new Dictionary<string, object> ();
+					newwordsUpdate[PROGRESS_WORD_KEY] = String.Join(",", words);
+					newwordsUpdate[PROGRESS_DATE_KEY] = oldDate;
+					newwordsUpdate[PROGRESS_COUNT_KEY] = words.Length;
+
+					FirebaseDatabase.DefaultInstance
+						.GetReference(LEARNING_PROGRESS)
+						.Child(firebaseUser.UserId)
+						.Child(PROGRESS_NEWWORDS_KEY)
+						.UpdateChildrenAsync(newwordsUpdate);
+				}
+			});
+		}
+	}
+
+	public void updateInreviewFieldInLearningProgressToday (string[] words) {
+
+		if (words != null) {
+			getCurrentDatetimeInReviewField(oldDate => {
+				//when user still learning with old data (yesterday data..)
+				//still update list words for old date
+				//when user finish learning (with old date or new date), check this date to count streak
+				if (oldDate > 0) {
+					Dictionary<string, object> newwordsUpdate = new Dictionary<string, object> ();
+					newwordsUpdate[PROGRESS_WORD_KEY] = String.Join(",", words);
+					newwordsUpdate[PROGRESS_DATE_KEY] = oldDate;
+					newwordsUpdate[PROGRESS_COUNT_KEY] = words.Length;
+
+					FirebaseDatabase.DefaultInstance
+						.GetReference(LEARNING_PROGRESS)
+						.Child(firebaseUser.UserId)
+						.Child(PROGRESS_INREVIEW_KEY)
+						.UpdateChildrenAsync(newwordsUpdate);
+				}
+			});
+		}
 	}
 
 	//get new words list from /newwords field
@@ -655,6 +651,7 @@ public class FirebaseHelper  {
 					} else if (task.IsCompleted) {
 						DataSnapshot snapshot = task.Result;
 						Debug.Log("addAWordToAgainList :: " + snapshot.Key);
+
 						string againList = snapshot.GetRawJsonValue().Trim('"');
 						againList = String.Format("{0},{1}", againList, word);
 
@@ -671,6 +668,26 @@ public class FirebaseHelper  {
 		} else {
 			Debug.Log("No user is signed in");
 		}
+	}
+
+	public void updateAgainList (string[] words) {
+		if (signedIn == true) {
+
+			if (words != null) {
+				Dictionary<string, object> newAgainList = new Dictionary<string, object> ();
+				newAgainList[PROGRESS_AGAIN_KEY] = String.Join(",", words);;
+
+				FirebaseDatabase.DefaultInstance
+					.GetReference(LEARNING_PROGRESS)
+					.Child(firebaseUser.UserId)
+					.Child(PROGRESS_AGAIN_KEY)
+					.UpdateChildrenAsync(newAgainList);
+			}
+			
+		} else {
+			Debug.Log("No user is signed in");
+		}
+
 	}
 
 	public void getAgainList (System.Action<string[]> callbackWhenDone) {
@@ -722,7 +739,7 @@ public class FirebaseHelper  {
 		bool res = false;
 		//refer to the word them update its queue field
 		if (signedIn == true) {
-			if (date > 0) {
+			if (words != null && date > 0) {
 				Dictionary<string, object> newwordsUpdate = new Dictionary<string, object> ();
 				newwordsUpdate[PROGRESS_WORD_KEY] = String.Join(",", words);
 				newwordsUpdate[PROGRESS_DATE_KEY] = date;
@@ -911,9 +928,10 @@ public class FirebaseHelper  {
 
 	//get datetime in /newwords
 	public void getCurrentDatetimeInNewWordsField (System.Action<int> callbackWhenDone) {
-		Debug.Log("FirebaseHelper :: getCurrentDatetimeOfLearningProgress");
+		Debug.Log("FirebaseHelper :: getCurrentDatetimeInNewWordsField");
 		if (signedIn == true) {
 			_getCurrentDatetimeOfLearningProgress(PROGRESS_NEWWORDS_KEY, date => {
+				Debug.Log("FirebaseHelper :: getCurrentDatetimeInNewWordsField :: date :: " +date.ToString());
 				callbackWhenDone(date);
 			});
 
@@ -924,9 +942,10 @@ public class FirebaseHelper  {
 
 	//get datetime in /inreview
 	public void getCurrentDatetimeInReviewField (System.Action<int> callbackWhenDone) {
-		Debug.Log("FirebaseHelper :: getCurrentDatetimeOfLearningProgress");
+		Debug.Log("FirebaseHelper :: getCurrentDatetimeInReviewField");
 		if (signedIn == true) {
 			_getCurrentDatetimeOfLearningProgress(PROGRESS_INREVIEW_KEY, date => {
+				Debug.Log("FirebaseHelper :: getCurrentDatetimeInReviewField :: date :: " +date.ToString());
 				callbackWhenDone(date);
 			});
 
@@ -1098,7 +1117,7 @@ public class FirebaseHelper  {
 
 		_getListNewWordsToLearn(limit, words => {
 			int date = DateTimeHelper.getBeginOfDayInSec();
-			updateNewWordsFieldInLearningProgress(words, date);
+			_updateNewWordsFieldInLearningProgress(words, date);
 
 			callbackWhenDone(words.Length);
 		});
