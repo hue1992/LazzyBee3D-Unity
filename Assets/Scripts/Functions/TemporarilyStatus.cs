@@ -14,7 +14,10 @@ public class TemporarilyStatus {
 
 	public float speaking_speed		= 1.0f;
 
-	public UserInfo userInfo 				= null;
+	public UserInfo userInfo 		= null;
+
+	public string[] days 			= null;
+	public int streaks 				= 0;
 
 	private static TemporarilyStatus _instance = null;
 
@@ -24,5 +27,29 @@ public class TemporarilyStatus {
 
 		}
 		return _instance;
+	}
+
+	public void addDayToStreak (string day) {
+		if (days != null) {
+			List<string> tmp = new List<string>(days);
+
+			tmp.Add(day);
+
+			if (tmp.Count > 7) {
+				tmp.RemoveAt(0);
+			}
+
+			days = tmp.ToArray();
+		}
+	}
+
+	public string convertDayStreakToString () {
+		string res = "";
+
+		if (days != null) {
+			res = string.Join(',', days);
+		}
+
+		return res;
 	}
 }

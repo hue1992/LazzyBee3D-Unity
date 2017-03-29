@@ -120,6 +120,14 @@ public class HomeController : MonoBehaviour {
 					_loadTodayData();
 				}
 			});
+
+			//can load/set streak here, because it is used right now
+			//when use streak info, should check days != null
+			FirebaseHelper.getInstance().getUserStreaks(isSuccessful => {
+				if (isSuccessful == false) {
+					FirebaseHelper.getInstance().updateUserStreaks();
+				}
+			});
 		}
 	}
 	

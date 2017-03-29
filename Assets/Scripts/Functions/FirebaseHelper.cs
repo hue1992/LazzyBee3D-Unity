@@ -37,6 +37,9 @@ public class FirebaseHelper  {
 	private const string SETTINGS_TIME_SHOW_ANSWER_KEY 	= "time_to_show_answer";
 	private const string SETTINGS_NOTIFICATION_KEY 		= "notification";
 
+	private const string STREAKS_DAYS_KEY = "days";
+	private const string STREAKS_COUNT_KEY = "count";
+
     private static FirebaseHelper _instance = null;
 	private static Firebase.Auth.FirebaseAuth auth = null;
 	private static Firebase.Auth.FirebaseUser firebaseUser = null;
@@ -1185,6 +1188,7 @@ public class FirebaseHelper  {
 	//time_to_show_answer
 	public void getUserSettings (System.Action<bool> callbackWhenDone) {
 		Debug.Log("FirebaseHelper :: getUserSettings :: " +firebaseUser.UserId);
+
 		if (signedIn == true) {
 			FirebaseDatabase.DefaultInstance
 				.GetReference(SETTINGS)
@@ -1202,8 +1206,6 @@ public class FirebaseHelper  {
 						Debug.Log("snapshot :: getUserSettings :: " + snapshot.Key);
 
 						if (snapshot.GetRawJsonValue() != null) {
-							Debug.Log("snapshot.Child(SETTINGS_MY_LEVEL_KEY) :: " + snapshot.Child(SETTINGS_MY_LEVEL_KEY).GetRawJsonValue());
-							Debug.Log("snapshot.Child(SETTINGS_TOTAL_CARD_KEY) :: " + snapshot.Child(SETTINGS_TOTAL_CARD_KEY).GetRawJsonValue());
 
 							TemporarilyStatus.getInstance().auto_play_sound 	= Int32.Parse(snapshot.Child(SETTINGS_AUTOPLAY_KEY).GetRawJsonValue().Trim('"'));
 							TemporarilyStatus.getInstance().my_level  			= Int32.Parse(snapshot.Child(SETTINGS_MY_LEVEL_KEY).GetRawJsonValue().Trim('"'));
@@ -1267,6 +1269,68 @@ public class FirebaseHelper  {
 		}
 	}
 
+	/**************** functions for STREAKS *****************/
+
+	public void getUserStreaks (System.Action<bool> callbackWhenDone) {
+		Debug.Log("FirebaseHelper :: getUserStreaks :: " +firebaseUser.UserId);
+
+		if (signedIn == true) {
+			FirebaseDatabase.DefaultInstance
+				.GetReference(STREAKS)
+				.Child(firebaseUser.UserId)
+				.GetValueAsync().ContinueWith(task => {
+					if (task.IsFaulted) {
+						// Handle the error...
+						Debug.Log("getUserStreaks :: task :: error" + task.ToString());
+						callbackWhenDone(false);
+
+					} else if (task.IsCompleted) {
+
+						DataSnapshot snapshot = task.Result;
+						Debug.Log("snapshot :: getUserStreaks :: " + snapshot.Key);
+
+						if (snapshot.GetRawJsonValue() != null) {
+							string jsonString = snapshot.Child(STREAKS_DAYS_KEY).GetRawJsonValue().Trim('"');
+								
+							TemporarilyStatus.getInstance().days 		= jsonString.TrimStart('{').TrimEnd('}').Split(',');
+							TemporarilyStatus.getInstance().streaks 	= Int32.Parse(snapshot.Child(STREAKS_COUNT_KEY).GetRawJsonValue().Trim('"'));
+
+							Debug.Log("FirebaseHelper :: getUserStreaks :: success");
+							callbackWhenDone(true);
+
+						} else {
+							Debug.Log("FirebaseHelper :: getUserStreaks :: no settings");
+							callbackWhenDone(false);
+						}
+
+
+
+					} else {
+						Debug.Log("FirebaseHelper :: getUserStreaks :: error");
+						callbackWhenDone(false);
+					}
+				});
+
+		} else {
+			callbackWhenDone(false);
+		}
+	}
+
+	public void updateUserStreaks() {
+		if (signedIn == true) {
+			Dictionary<string, object> newValue = new Dictionary<string, object> ();
+			newValue [STREAKS_DAYS_KEY] 	= TemporarilyStatus.getInstance().convertDayStreakToString();
+			newValue [STREAKS_COUNT_KEY]	= TemporarilyStatus.getInstance().streaks;
+
+			FirebaseDatabase.DefaultInstance
+				.GetReference (STREAKS)
+				.Child (firebaseUser.UserId)
+				.UpdateChildrenAsync (newValue);
+
+		} else {
+			Debug.Log("No user is signed in");
+		}
+	}
 
 	private Dictionary<string, object> convertJsonStringToObject(string jsonString) {
 		Debug.Log("convertJsonStringToObject :: " + jsonString);
@@ -1282,7 +1346,5 @@ public class FirebaseHelper  {
 		return dictionary;
 	}
 
-	//add user to learning_progress
-	//always add users to learning_progress after create user account
 }
 #endif
