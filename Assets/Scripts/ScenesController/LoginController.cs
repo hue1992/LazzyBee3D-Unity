@@ -57,7 +57,7 @@ public class LoginController : MonoBehaviour {
 			// AccessToken class will have session details
 			var aToken = Facebook.Unity.AccessToken.CurrentAccessToken;
 
-			FirebaseHelper.getInstance().loginWithFacebook(aToken.TokenString, handleSigninResult);
+			FirebaseHelper.getInstance().loginWithFacebook(aToken.TokenString, handleSigninFBResult);
 
 		} else {
 			Debug.Log("User cancelled login");
@@ -65,14 +65,16 @@ public class LoginController : MonoBehaviour {
 		}
 	}
 
-	void handleSigninResult(UserInfo userInfo) {
-		Debug.Log("handleSigninResult");
+	void handleSigninFBResult(UserInfo userInfo) {
+		Debug.Log("handleSigninFBResult");
 		if (userInfo != null && userInfo.userID != "") {
 //			test.text = String.Format("fb login successfully :: {0}", userInfo.userID);
 
 			Debug.Log(String.Format("fb login successfully :: {0}", userInfo.userID));
 			//load home screen
-			SceneManager.LoadScene("Home");
+			configUserSettings(() => {
+				SceneManager.LoadScene("Home");	
+			});
 
 		} else {
 			test.text = "FB login failed";
@@ -88,7 +90,9 @@ public class LoginController : MonoBehaviour {
 
 				Debug.Log(String.Format("Anonymous login successfully :: {0}", userInfo.userID));
 				//load home screen
-				SceneManager.LoadScene("Home");
+				configUserSettings(() => {
+					SceneManager.LoadScene("Home");	
+				});
 
 			} else {
 				test.text = "no anonymous signed in";
@@ -122,6 +126,10 @@ public class LoginController : MonoBehaviour {
 		if (userInfo != null && userInfo.firebase_token != "") {
 			test.text = String.Format("Link successfully :: {0}", userInfo.userID);
 
+			configUserSettings(() => {
+				SceneManager.LoadScene("Home");	
+			});
+
 		} else {
 			test.text = String.Format("Link failed :: {0}", userInfo.userID);
 
@@ -136,8 +144,10 @@ public class LoginController : MonoBehaviour {
 
 		if (userInfo != null && userInfo.userID != "") {
 			Debug.Log(String.Format("Logged in already :: {0}", userInfo.userID));
-			//load home screen
-			SceneManager.LoadScene("Home");
+			//load settings and load home screen
+			configUserSettings(() => {
+				SceneManager.LoadScene("Home");	
+			});
 
 		} else {
 			test.text = "no user signed in";
@@ -167,5 +177,16 @@ public class LoginController : MonoBehaviour {
 		}
 
 		test.text = "Logged out";
+	}
+
+	public void configUserSettings (System.Action callbackWhenDone) {
+		FirebaseHelper.getInstance().getUserSettings(isExist => {
+			//if isExist is true, user settings are set in TemporaryStatus already
+			if (isExist == false) {
+				FirebaseHelper.getInstance().configDefaultSettings();
+			}
+
+			callbackWhenDone();
+		});
 	}
 }

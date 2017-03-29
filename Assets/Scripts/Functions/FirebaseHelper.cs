@@ -332,6 +332,8 @@ public class FirebaseHelper  {
 			userRes.username = firebaseUser.DisplayName;
 			userRes.firebase_token = firebaseUser.RefreshToken;
 
+			TemporarilyStatus.getInstance().userInfo = userRes;
+
 			return userRes;
 
 		} else {
@@ -354,6 +356,9 @@ public class FirebaseHelper  {
 
 	//create new user
 	public void createNewUser (UserInfo user) {
+
+		TemporarilyStatus.getInstance().userInfo = user;
+
 		FirebaseDatabase.DefaultInstance
 			.GetReference(USERS)
 			.Child(user.userID)
@@ -364,6 +369,8 @@ public class FirebaseHelper  {
 	public void updateUserInfo (UserInfo user) {
 
 		if (user.userID != null && user.userID.Length > 0) {
+
+			TemporarilyStatus.getInstance().userInfo = user;
 
 			Dictionary<string, object> userUpdate = new Dictionary<string, object> ();
 			userUpdate["userID"]	 		= user.userID;
@@ -818,10 +825,10 @@ public class FirebaseHelper  {
 							}
 						}
 
-						Debug.Log("fetchWordProgress :: create new WordProgress");
+						Debug.Log("fetchWordProgress :: create new WordProgress");	//do not create new progress here, create when tap on the 4 buttons
 						//create new progress
 						WordProgress newWordProgress = new WordProgress();
-						updateInprogressFieldInLearningProgress(word, newWordProgress);
+//						updateInprogressFieldInLearningProgress(word, newWordProgress);
 
 						callbackWhenDone(newWordProgress);
 					}
@@ -1000,7 +1007,7 @@ public class FirebaseHelper  {
 	}
 
 	//get current word index that is corresponding to level
-	//current_level
+	//my_level
 	//current_word_index_lvxxx
 	//reserve in TemporarilyStatus
 	//call this functions before prepare newwords list and review list
@@ -1020,9 +1027,9 @@ public class FirebaseHelper  {
 					} else if (task.IsCompleted) {
 						DataSnapshot snapshot = task.Result;
 						Debug.Log("snapshot :: " + snapshot.Key);
-						TemporarilyStatus.getInstance().current_level = Int32.Parse(snapshot.Child("current_level").GetRawJsonValue());
+//						TemporarilyStatus.getInstance().current_level = Int32.Parse(snapshot.Child("current_level").GetRawJsonValue());
 
-						string current_word_ind_key = "current_word_index_lv" + TemporarilyStatus.getInstance().current_level;
+						string current_word_ind_key = "current_word_index_lv" + TemporarilyStatus.getInstance().my_level;
 						TemporarilyStatus.getInstance().current_word_index = Int32.Parse(snapshot.Child(current_word_ind_key).GetRawJsonValue());
 
 						callbackWhenDone(true);
@@ -1039,11 +1046,10 @@ public class FirebaseHelper  {
 		//refer to the word then update its queue field
 		if (signedIn == true) {
 			Dictionary<string, object> newCurStatus = new Dictionary<string, object> ();
-			//current_level
 			//current_word_index_lvxxx
-			newCurStatus["current_level"] = TemporarilyStatus.getInstance().current_level;
+//			newCurStatus["current_level"] = TemporarilyStatus.getInstance().current_level;
 
-			string current_word_ind_key = "current_word_index_lv" + TemporarilyStatus.getInstance().current_level;
+			string current_word_ind_key = "current_word_index_lv" + TemporarilyStatus.getInstance().my_level;
 			newCurStatus[current_word_ind_key] = TemporarilyStatus.getInstance().current_word_index;
 
 			FirebaseDatabase.DefaultInstance
@@ -1115,7 +1121,7 @@ public class FirebaseHelper  {
 			limit = 20;
 		}
 
-		_getListNewWordsToLearn(limit, words => {
+		_pickNewWordsFromLevelsAddToQueue(limit, words => {
 			int date = DateTimeHelper.getBeginOfDayInSec();
 			_updateNewWordsFieldInLearningProgress(words, date);
 
@@ -1123,14 +1129,14 @@ public class FirebaseHelper  {
 		});
 	}
 
-	private void _getListNewWordsToLearn (int limit, System.Action<string[]> callbackWhenDone) {
-		Debug.Log("FirebaseHelper :: _getListNewWordsToLearn");
+	private void _pickNewWordsFromLevelsAddToQueue (int limit, System.Action<string[]> callbackWhenDone) {
+		Debug.Log("FirebaseHelper :: _pickNewWordsFromLevelsAddToQueue");
 		if (limit > 20) {	//due to limited quota
 			limit = 20;
 		}
 
-		string level = "level" + TemporarilyStatus.getInstance().current_level;
-		Debug.Log("_getListNewWordsToLearn :: level :: " + level);
+		string level = "level" + TemporarilyStatus.getInstance().my_level;
+		Debug.Log("_pickNewWordsFromLevelsAddToQueue :: level :: " + level);
 
 		FirebaseDatabase.DefaultInstance
 			.GetReference(LEVELS)
@@ -1141,7 +1147,7 @@ public class FirebaseHelper  {
 			.GetValueAsync().ContinueWith(task => {
 				if (task.IsFaulted) {
 					// Handle the error...
-					Debug.Log("_getListNewWordsToLearn :: task :: error" + task.ToString());
+					Debug.Log("_pickNewWordsFromLevelsAddToQueue :: task :: error" + task.ToString());
 					callbackWhenDone(new string[0]);
 
 				} else if (task.IsCompleted) {
@@ -1153,6 +1159,15 @@ public class FirebaseHelper  {
 						Debug.Log("snapshot.Children :: " + item.GetRawJsonValue().Trim('"'));
 
 						wordsList.Add(item.GetRawJsonValue().Trim('"'));
+					}
+
+					//update counter
+					TemporarilyStatus.getInstance().current_word_index = TemporarilyStatus.getInstance().current_word_index + wordsList.Count;
+					updateCurrentLearningWordIndex();
+
+					if (wordsList.Count < limit) {
+						TemporarilyStatus.getInstance().my_level++;
+						updateLevelSetting(TemporarilyStatus.getInstance().my_level);
 					}
 
 					callbackWhenDone(wordsList.ToArray());
@@ -1169,7 +1184,7 @@ public class FirebaseHelper  {
 	//notification
 	//time_to_show_answer
 	public void getUserSettings (System.Action<bool> callbackWhenDone) {
-
+		Debug.Log("FirebaseHelper :: getUserSettings :: " +firebaseUser.UserId);
 		if (signedIn == true) {
 			FirebaseDatabase.DefaultInstance
 				.GetReference(SETTINGS)
@@ -1181,17 +1196,34 @@ public class FirebaseHelper  {
 						callbackWhenDone(false);
 
 					} else if (task.IsCompleted) {
+						Debug.Log("FirebaseHelper :: getUserSettings :: success");
+
 						DataSnapshot snapshot = task.Result;
-						Debug.Log("snapshot :: " + snapshot.Key);
+						Debug.Log("snapshot :: getUserSettings :: " + snapshot.Key);
 
-						TemporarilyStatus.getInstance().auto_play_sound 	= Int32.Parse(snapshot.Child(SETTINGS_AUTOPLAY_KEY).GetRawJsonValue());
-						TemporarilyStatus.getInstance().my_level  			= Int32.Parse(snapshot.Child(SETTINGS_MY_LEVEL_KEY).GetRawJsonValue());
-						TemporarilyStatus.getInstance().new_card_a_day 		= Int32.Parse(snapshot.Child(SETTINGS_NEW_CARD_KEY).GetRawJsonValue());
-						TemporarilyStatus.getInstance().total_card_a_day 	= Int32.Parse(snapshot.Child(SETTINGS_TOTAL_CARD_KEY).GetRawJsonValue());
-						TemporarilyStatus.getInstance().time_to_show_answer	= Int32.Parse(snapshot.Child(SETTINGS_TIME_SHOW_ANSWER_KEY).GetRawJsonValue());
-						TemporarilyStatus.getInstance().notification	 	= Int32.Parse(snapshot.Child(SETTINGS_NOTIFICATION_KEY).GetRawJsonValue());
+						if (snapshot.GetRawJsonValue() != null) {
+							Debug.Log("snapshot.Child(SETTINGS_MY_LEVEL_KEY) :: " + snapshot.Child(SETTINGS_MY_LEVEL_KEY).GetRawJsonValue());
+							Debug.Log("snapshot.Child(SETTINGS_TOTAL_CARD_KEY) :: " + snapshot.Child(SETTINGS_TOTAL_CARD_KEY).GetRawJsonValue());
 
-						callbackWhenDone(true);
+							TemporarilyStatus.getInstance().auto_play_sound 	= Int32.Parse(snapshot.Child(SETTINGS_AUTOPLAY_KEY).GetRawJsonValue().Trim('"'));
+							TemporarilyStatus.getInstance().my_level  			= Int32.Parse(snapshot.Child(SETTINGS_MY_LEVEL_KEY).GetRawJsonValue().Trim('"'));
+							TemporarilyStatus.getInstance().new_card_a_day 		= Int32.Parse(snapshot.Child(SETTINGS_NEW_CARD_KEY).GetRawJsonValue().Trim('"'));
+							TemporarilyStatus.getInstance().total_card_a_day 	= Int32.Parse(snapshot.Child(SETTINGS_TOTAL_CARD_KEY).GetRawJsonValue().Trim('"'));
+							TemporarilyStatus.getInstance().time_to_show_answer	= Int32.Parse(snapshot.Child(SETTINGS_TIME_SHOW_ANSWER_KEY).GetRawJsonValue().Trim('"'));
+							TemporarilyStatus.getInstance().notification	 	= Int32.Parse(snapshot.Child(SETTINGS_NOTIFICATION_KEY).GetRawJsonValue().Trim('"'));
+
+							callbackWhenDone(true);
+
+						} else {
+							Debug.Log("FirebaseHelper :: getUserSettings :: no settings");
+							callbackWhenDone(false);
+						}
+
+
+
+					} else {
+						Debug.Log("FirebaseHelper :: getUserSettings :: error");
+						callbackWhenDone(false);
 					}
 				});
 			
@@ -1200,7 +1232,27 @@ public class FirebaseHelper  {
 		}
 	}
 
-	public void updateUserSettings(string settingKey, int value) {
+	public void configDefaultSettings() {
+		_updateUserSettings(SETTINGS_MY_LEVEL_KEY, CommonDefine.SETTINGS_DEFAULT_LEVEL);
+		_updateUserSettings(SETTINGS_AUTOPLAY_KEY, CommonDefine.SETTINGS_AUTO_PLAY);
+		_updateUserSettings(SETTINGS_NEW_CARD_KEY, CommonDefine.SETTINGS_NEWCARD_A_DAY);
+		_updateUserSettings(SETTINGS_TOTAL_CARD_KEY, CommonDefine.SETTINGS_TOTALCARD_A_DAY);
+		_updateUserSettings(SETTINGS_TIME_SHOW_ANSWER_KEY, CommonDefine.SETTINGS_TIME_SHOW_ANSWER);
+		_updateUserSettings(SETTINGS_NOTIFICATION_KEY, CommonDefine.SETTINGS_NOTIFICATION);
+
+		TemporarilyStatus.getInstance().auto_play_sound 	= CommonDefine.SETTINGS_AUTO_PLAY;
+		TemporarilyStatus.getInstance().my_level  			= CommonDefine.SETTINGS_DEFAULT_LEVEL;
+		TemporarilyStatus.getInstance().new_card_a_day 		= CommonDefine.SETTINGS_NEWCARD_A_DAY;
+		TemporarilyStatus.getInstance().total_card_a_day 	= CommonDefine.SETTINGS_TOTALCARD_A_DAY;
+		TemporarilyStatus.getInstance().time_to_show_answer	= CommonDefine.SETTINGS_TIME_SHOW_ANSWER;
+		TemporarilyStatus.getInstance().notification	 	= CommonDefine.SETTINGS_NOTIFICATION;
+	}
+
+	public void updateLevelSetting(int value) {
+		_updateUserSettings(SETTINGS_MY_LEVEL_KEY, value);
+	}
+
+	private void _updateUserSettings(string settingKey, int value) {
 		if (signedIn == true) {
 			Dictionary<string, object> newValue = new Dictionary<string, object> ();
 			newValue [settingKey] = value;
