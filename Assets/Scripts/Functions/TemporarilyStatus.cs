@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 public class TemporarilyStatus {
-	public int current_level 		= CommonDefine.SETTINGS_DEFAULT_LEVEL;	//current level, even if my_level is 2, current_level could be 3 when user leaerned all words in level 2
+//	public int current_level 		= CommonDefine.SETTINGS_DEFAULT_LEVEL;	//current level, even if my_level is 2, current_level could be 3 when user leaerned all words in level 2
 	public int current_word_index 	= 0;
 
 	public int my_level 			= CommonDefine.SETTINGS_DEFAULT_LEVEL;	//set in settings
@@ -13,6 +13,8 @@ public class TemporarilyStatus {
 	public int notification			= CommonDefine.SETTINGS_NOTIFICATION;	//0 or 1
 
 	public float speaking_speed		= 1.0f;
+
+	public UserInfo userInfo 				= null;
 
 	private static TemporarilyStatus _instance = null;
 
