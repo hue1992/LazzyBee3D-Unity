@@ -71,10 +71,14 @@ public class LoginController : MonoBehaviour {
 //			test.text = String.Format("fb login successfully :: {0}", userInfo.userID);
 
 			Debug.Log(String.Format("fb login successfully :: {0}", userInfo.userID));
-			//load home screen
-			configUserSettings(() => {
-				SceneManager.LoadScene("Home");	
-			});
+			try {
+				//load home screen
+				configUserSettings(() => {
+					SceneManager.LoadScene("Home");	
+				});
+			} catch (Exception e) {
+				Debug.Log(String.Format("handleSigninFBResult :: exception :: {0}", e.ToString()));
+			}
 
 		} else {
 			test.text = "FB login failed";
@@ -96,6 +100,7 @@ public class LoginController : MonoBehaviour {
 
 			} else {
 				test.text = "no anonymous signed in";
+				OnLogOutButtonClick();
 			}
 		});
 	}
