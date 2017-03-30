@@ -178,6 +178,12 @@ public class StudyController : MonoBehaviour
 
 		if (currentWord.Length > 0) {
 			fetchWordUserLearningInfo();
+
+		} else {
+			//check streak
+			FirebaseHelper.getInstance().checkStreakAfterLearningFinished(isStreak => {
+				Debug.Log("Is Count streak :: " +isStreak.ToString());
+			});
 		}
     }
 
