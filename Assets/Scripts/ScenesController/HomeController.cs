@@ -112,12 +112,17 @@ public class HomeController : MonoBehaviour {
 			//get datetime in /newwords field, check if it is obsolete, prepare new list
 			//date in /newwords is always equal to /inreview
 			FirebaseHelper.getInstance().getCurrentDatetimeInNewWordsField(date => {
-				Debug.Log("getCurrentDatetimeInNewWordsField :: date :: " + date.ToString());
+				Debug.Log("HomeController :: date :: " + date.ToString());
 
 				int curDate = DateTimeHelper.getBeginOfDayInSec();
+				Debug.Log("HomeController :: curDate :: " + curDate.ToString());
 
 				if (date != curDate) {
+					Debug.Log("HomeController :: load new data");
 					_loadTodayData();
+
+				} else {
+					Debug.Log("HomeController :: do not load new data");
 				}
 			});
 

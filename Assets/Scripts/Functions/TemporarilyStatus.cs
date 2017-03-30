@@ -1,9 +1,10 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 public class TemporarilyStatus {
 //	public int current_level 		= CommonDefine.SETTINGS_DEFAULT_LEVEL;	//current level, even if my_level is 2, current_level could be 3 when user leaerned all words in level 2
-	public int current_word_index 	= 0;
+	public int picked_word_index 	= 0;
 
 	public int my_level 			= CommonDefine.SETTINGS_DEFAULT_LEVEL;	//set in settings
 	public int new_card_a_day 		= CommonDefine.SETTINGS_NEWCARD_A_DAY;
@@ -47,7 +48,7 @@ public class TemporarilyStatus {
 		string res = "";
 
 		if (days != null) {
-			res = string.Join(',', days);
+			res = String.Join(",", days);
 		}
 
 		return res;

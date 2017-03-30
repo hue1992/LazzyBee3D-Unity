@@ -1011,11 +1011,12 @@ public class FirebaseHelper  {
 
 	//get current word index that is corresponding to level
 	//my_level
-	//current_word_index_lvxxx
+	//picked_word_index_lvxxx
 	//reserve in TemporarilyStatus
 	//call this functions before prepare newwords list and review list
-	public void getCurrentLearningWordIndex (System.Action<bool> callbackWhenDone) {
-		
+	private void _getCurrentLearningWordIndex (System.Action<bool> callbackWhenDone) {
+		Debug.Log("_getCurrentLearningWordIndex");
+
 		if (signedIn == true) {
 			FirebaseDatabase.DefaultInstance
 				.GetReference(LEARNING_PROGRESS)
@@ -1024,18 +1025,28 @@ public class FirebaseHelper  {
 				.GetValueAsync().ContinueWith(task => {
 					if (task.IsFaulted) {
 						// Handle the error...
-						Debug.Log("getCurrentLearningWordIndex :: task :: error" + task.ToString());
+						Debug.Log("_getCurrentLearningWordIndex :: task :: error" + task.ToString());
 						callbackWhenDone(false);
 
 					} else if (task.IsCompleted) {
 						DataSnapshot snapshot = task.Result;
-						Debug.Log("snapshot :: " + snapshot.Key);
-//						TemporarilyStatus.getInstance().current_level = Int32.Parse(snapshot.Child("current_level").GetRawJsonValue());
+						Debug.Log("_getCurrentLearningWordIndex :: snapshot :: " + snapshot.Key);
 
-						string current_word_ind_key = "current_word_index_lv" + TemporarilyStatus.getInstance().my_level;
-						TemporarilyStatus.getInstance().current_word_index = Int32.Parse(snapshot.Child(current_word_ind_key).GetRawJsonValue());
+						if (snapshot.GetRawJsonValue() != null) {
 
-						callbackWhenDone(true);
+							string picked_word_ind_key = "picked_word_index_lv" + TemporarilyStatus.getInstance().my_level;
+							TemporarilyStatus.getInstance().picked_word_index = Int32.Parse(snapshot.Child(picked_word_ind_key).GetRawJsonValue());
+							Debug.Log("_getCurrentLearningWordIndex :: succcessfull");
+							callbackWhenDone(true);
+
+						} else {
+							Debug.Log("_getCurrentLearningWordIndex :: failed");
+							callbackWhenDone(false);
+						}
+
+					} else {
+						Debug.Log("_getCurrentLearningWordIndex :: something wrong");
+						callbackWhenDone(false);
 					}
 				});
 		} else {
@@ -1049,18 +1060,21 @@ public class FirebaseHelper  {
 		//refer to the word then update its queue field
 		if (signedIn == true) {
 			Dictionary<string, object> newCurStatus = new Dictionary<string, object> ();
-			//current_word_index_lvxxx
+			//picked_word_index_lvxxx
 //			newCurStatus["current_level"] = TemporarilyStatus.getInstance().current_level;
 
-			string current_word_ind_key = "current_word_index_lv" + TemporarilyStatus.getInstance().my_level;
-			newCurStatus[current_word_ind_key] = TemporarilyStatus.getInstance().current_word_index;
+			string picked_word_ind_key = "picked_word_index_lv" + TemporarilyStatus.getInstance().my_level;
+
+			Debug.Log("picked_word_ind_key :: " + picked_word_ind_key);
+			newCurStatus[picked_word_ind_key] = TemporarilyStatus.getInstance().picked_word_index;
 
 			FirebaseDatabase.DefaultInstance
 				.GetReference(LEARNING_PROGRESS)
 				.Child(firebaseUser.UserId)
 				.Child(PROGRESS_CURRENT_STS_KEY)
-				.UpdateChildrenAsync(convertJsonStringToObject(JsonUtility.ToJson(newCurStatus)));
+				.UpdateChildrenAsync(newCurStatus);
 
+			Debug.Log("updateCurrentLearningWordIndex :: successful");
 			res = true;
 
 		} else {
@@ -1074,13 +1088,13 @@ public class FirebaseHelper  {
 	//increase current word index
 	public void increaseCurrentWordIndex(int level) {
 		if (signedIn == true) {
-			string current_word_ind_key = "current_word_index_lv" + level;
+			string picked_word_ind_key = "picked_word_index_lv" + level;
 				
 			FirebaseDatabase.DefaultInstance
 				.GetReference(LEARNING_PROGRESS)
 				.Child(firebaseUser.UserId)
 				.Child(PROGRESS_CURRENT_STS_KEY)
-				.Child(current_word_ind_key)
+				.Child(picked_word_ind_key)
 				.GetValueAsync().ContinueWith(task => {
 					if (task.IsFaulted) {
 						// Handle the error...
@@ -1093,14 +1107,14 @@ public class FirebaseHelper  {
 						ind = ind + 1;
 
 						Dictionary<string, object> newCurInd = new Dictionary<string, object> ();
-						//current_word_index_lvxxx
-						newCurInd[current_word_ind_key] = ind;
+						//picked_word_index_lvxxx
+						newCurInd[picked_word_ind_key] = ind;
 
 						FirebaseDatabase.DefaultInstance
 							.GetReference(LEARNING_PROGRESS)
 							.Child(firebaseUser.UserId)
 							.Child(PROGRESS_CURRENT_STS_KEY)
-							.Child(current_word_ind_key)
+							.Child(picked_word_ind_key)
 							.UpdateChildrenAsync(newCurInd);
 					}
 				});
@@ -1124,11 +1138,18 @@ public class FirebaseHelper  {
 			limit = 20;
 		}
 
-		_pickNewWordsFromLevelsAddToQueue(limit, words => {
-			int date = DateTimeHelper.getBeginOfDayInSec();
-			_updateNewWordsFieldInLearningProgress(words, date);
+		_getCurrentLearningWordIndex(success => {
+			if (success == true || TemporarilyStatus.getInstance().picked_word_index == 0) {
+				_pickNewWordsFromLevelsAddToQueue(limit, words => {
+					int date = DateTimeHelper.getBeginOfDayInSec();
+					_updateNewWordsFieldInLearningProgress(words, date);
 
-			callbackWhenDone(words.Length);
+					callbackWhenDone(words.Length);
+				});
+
+			} else {
+				//show alert "prepare data failed"
+			}
 		});
 	}
 
@@ -1140,12 +1161,13 @@ public class FirebaseHelper  {
 
 		string level = "level" + TemporarilyStatus.getInstance().my_level;
 		Debug.Log("_pickNewWordsFromLevelsAddToQueue :: level :: " + level);
+		int nextIndex = TemporarilyStatus.getInstance().picked_word_index + 1;
 
 		FirebaseDatabase.DefaultInstance
 			.GetReference(LEVELS)
 			.Child(level)
 			.OrderByKey()
-			.StartAt(TemporarilyStatus.getInstance().current_word_index.ToString())
+			.StartAt(nextIndex.ToString())
 			.LimitToFirst(limit)
 			.GetValueAsync().ContinueWith(task => {
 				if (task.IsFaulted) {
@@ -1157,7 +1179,7 @@ public class FirebaseHelper  {
 					DataSnapshot snapshot = task.Result;
 					List<string> wordsList = new List<string>();
 					// Do something with snapshot...
-					Debug.Log("snapshot.Children :: count :: " + snapshot.ChildrenCount);
+					Debug.Log("_pickNewWordsFromLevelsAddToQueue ::snapshot.Children :: count :: " + snapshot.ChildrenCount);
 					foreach (var item in snapshot.Children) {
 						Debug.Log("snapshot.Children :: " + item.GetRawJsonValue().Trim('"'));
 
@@ -1165,11 +1187,12 @@ public class FirebaseHelper  {
 					}
 
 					//update counter
-					TemporarilyStatus.getInstance().current_word_index = TemporarilyStatus.getInstance().current_word_index + wordsList.Count;
+					TemporarilyStatus.getInstance().picked_word_index = TemporarilyStatus.getInstance().picked_word_index + wordsList.Count;
 					updateCurrentLearningWordIndex();
 
 					if (wordsList.Count < limit) {
 						TemporarilyStatus.getInstance().my_level++;
+						TemporarilyStatus.getInstance().picked_word_index = 0;
 						updateLevelSetting(TemporarilyStatus.getInstance().my_level);
 					}
 
@@ -1329,6 +1352,41 @@ public class FirebaseHelper  {
 
 		} else {
 			Debug.Log("No user is signed in");
+		}
+	}
+
+	//true: count streak | false: clear streak
+	public void checkStreakAfterLearningFinished (System.Action<bool> callbackWhenDone) {
+		Debug.Log("checkStreakAfterLearningFinishWithDate");
+
+		if (signedIn == true) {
+			getCurrentDatetimeInNewWordsField(date => {
+				Debug.Log("checkStreakAfterLearningFinishWithDate :: date :: " + date.ToString());
+
+				int curDate = DateTimeHelper.getBeginOfDayInSec();
+				Debug.Log("checkStreakAfterLearningFinishWithDate :: curDate :: " + curDate.ToString());
+
+				if (date == curDate) {
+					Debug.Log("checkStreakAfterLearningFinishWithDate :: record streak");
+
+					TemporarilyStatus.getInstance().addDayToStreak(curDate.ToString());
+					TemporarilyStatus.getInstance().streaks = TemporarilyStatus.getInstance().streaks + 1;
+
+					updateUserStreaks();
+					callbackWhenDone(true);
+
+				} else {
+					Debug.Log("checkStreakAfterLearningFinishWithDate :: clear streak");
+					TemporarilyStatus.getInstance().addDayToStreak(curDate.ToString());
+					TemporarilyStatus.getInstance().streaks = 0;
+
+					updateUserStreaks();
+					callbackWhenDone(false);
+				}
+			});
+		} else {
+			Debug.Log("No user is signed in");
+			callbackWhenDone(false);
 		}
 	}
 
