@@ -559,6 +559,29 @@ public class FirebaseHelper  {
 		}
 	}
 
+	public void updateAgainFieldInLearningProgressToday (string[] words) {
+
+		if (words != null) {
+			getCurrentDatetimeInAgainField(oldDate => {
+				//when user still learning with old data (yesterday data..)
+				//still update list words for old date
+				//when user finish learning (with old date or new date), check this date to count streak
+				if (oldDate > 0) {
+					Dictionary<string, object> newwordsUpdate = new Dictionary<string, object> ();
+					newwordsUpdate[PROGRESS_WORD_KEY] = String.Join(",", words);
+					newwordsUpdate[PROGRESS_DATE_KEY] = oldDate;
+					newwordsUpdate[PROGRESS_COUNT_KEY] = words.Length;
+
+					FirebaseDatabase.DefaultInstance
+						.GetReference(LEARNING_PROGRESS)
+						.Child(firebaseUser.UserId)
+						.Child(PROGRESS_AGAIN_KEY)
+						.UpdateChildrenAsync(newwordsUpdate);
+				}
+			});
+		}
+	}
+
 	//get new words list from /newwords field
 	//after open learning screen, get newwords list from "learning_progress/newwords"
 	public void getCurrentNewWordsList (System.Action<string[]> callbackWhenDone) {
@@ -721,19 +744,21 @@ public class FirebaseHelper  {
 					} else if (task.IsCompleted) {
 						DataSnapshot snapshot = task.Result;
 						Debug.Log("getAgainList :: " + snapshot.Key);
-						string againList = snapshot.GetRawJsonValue();
 
-						if (againList != null && againList.Length > 0) {
-							againList = againList.Trim('"');
+						string worsString = snapshot.Child(PROGRESS_WORD_KEY).GetRawJsonValue();
+
+						if (worsString != null && worsString.Length > 0) {
+							worsString = worsString.Trim('"');
 							char[] splitters = { ',' };
-							string[] resList = againList.Split(splitters, StringSplitOptions.RemoveEmptyEntries);
 
-							if (resList != null && resList.Length > 0) {
-								Debug.Log("resList # null");
+							string[] resList = worsString.Split(splitters, StringSplitOptions.RemoveEmptyEntries);
+
+							if ((resList != null) && (resList.Length > 0)) {
+								Debug.Log("getAgainList ::resList # null");
 								callbackWhenDone(resList);
 
 							} else {
-								Debug.Log("resList == null");
+								Debug.Log("getAgainList :: resList == null");
 								callbackWhenDone(new string[0]);
 							}
 
@@ -982,6 +1007,33 @@ public class FirebaseHelper  {
 			});
 	}
 
+	//update /again for a user in LEARNING_PROGRESS
+	private bool _updateAgainFieldInLearningProgress(string[] words, int date) {
+		bool res = false;
+		//refer to the word them update its queue field
+		if (signedIn == true) {
+			if (words != null && date > 0) {
+				Dictionary<string, object> newwordsUpdate = new Dictionary<string, object> ();
+				newwordsUpdate[PROGRESS_WORD_KEY] = String.Join(",", words);
+				newwordsUpdate[PROGRESS_DATE_KEY] = date;
+				newwordsUpdate[PROGRESS_COUNT_KEY] = words.Length;
+
+				FirebaseDatabase.DefaultInstance
+					.GetReference(LEARNING_PROGRESS)
+					.Child(firebaseUser.UserId)
+					.Child(PROGRESS_AGAIN_KEY)
+					.UpdateChildrenAsync(newwordsUpdate);
+
+				res = true;
+			}
+		} else {
+			Debug.Log("No user is signed in");
+			res = false;
+		}
+
+		return res;
+	}
+
 	//call when user tap on one of 4 buttons (again, easy, normal, hard)
 	public void updateWordProgressWithEaseOption (string word, WordProgress wordProgress, int easeOption) {
 		Algorithm.getInstance().updateWordProgressWithEaseOption(ref wordProgress, easeOption);
@@ -1017,8 +1069,22 @@ public class FirebaseHelper  {
 		}
 	}
 
+	//get datetime in /again
+	public void getCurrentDatetimeInAgainField (System.Action<int> callbackWhenDone) {
+		Debug.Log("FirebaseHelper :: getCurrentDatetimeInAgainField");
+		if (signedIn == true) {
+			_getCurrentDatetimeOfLearningProgress(PROGRESS_AGAIN_KEY, date => {
+				Debug.Log("FirebaseHelper :: getCurrentDatetimeInAgainField :: date :: " +date.ToString());
+				callbackWhenDone(date);
+			});
+
+		} else {
+			callbackWhenDone(0);
+		}
+	}
+
 	//get datetime in /newwords or /inreview (to check whether data is obsolete or not)
-	//fieldPath = "newwords" or "inreview"
+	//fieldPath = "newwords" or "inreview" or /again
 	private void _getCurrentDatetimeOfLearningProgress (string fieldPath, System.Action<int> callbackWhenDone) {
 		Debug.Log("_getCurrentDatetimeOfLearningProgress");
 		if (signedIn == true) {
