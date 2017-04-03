@@ -17,6 +17,8 @@ public class StudyController : MonoBehaviour
 	private List<string> againWords = new List<string>();
 	private List<string> reviewWords = new List<string>();
 
+	private List<string> subAgainWords = new List<string>();	//contain again list in current session, if user close study screen, will reload again list to againWords array
+
 	private CURRENT_LIST_NAME curListName = CURRENT_LIST_NAME.LIST_REVIEW;
 	private int currentWordInd = 0;		//always keep it = 0
 	private string currentWord = "";
@@ -54,7 +56,7 @@ public class StudyController : MonoBehaviour
 		}
 
 		newText.text 	= newWords.Count.ToString();
-		againText.text 	= againWords.Count.ToString();
+		againText.text 	= (againWords.Count + subAgainWords.Count).ToString();
 		reviewText.text	= reviewWords.Count.ToString();
 	}
 
@@ -85,7 +87,8 @@ public class StudyController : MonoBehaviour
 											CommonDefine.OPTION_AGAIN);
 		//add to again queue (add to the end of queue)
 		//if user is learning in again queue, it it not a problem because this word will be removed in endSessionStudy function and update to db
-		againWords.Add(currentWord);
+		subAgainWords.Add(currentWord);
+		updateAgainFieldInLearningProgressToday();
 
 		endSessionStudy();
     }
@@ -155,7 +158,7 @@ public class StudyController : MonoBehaviour
 				againWords.RemoveAt(currentWordInd);
 				needRemoveWord = false;
 
-				FirebaseHelper.getInstance().updateAgainFieldInLearningProgressToday(againWords.ToArray());
+				updateAgainFieldInLearningProgressToday();
 			}
 
 			if (againWords.Count == 0) {
@@ -163,7 +166,7 @@ public class StudyController : MonoBehaviour
 				currentWordInd = 0;
 
 			} else {
-//				currentWordInd++;
+
 				currentWord = againWords.ElementAt(currentWordInd);
 			}
 
@@ -179,12 +182,26 @@ public class StudyController : MonoBehaviour
 
 			if (newWords.Count == 0) {
 				currentWordInd = 0;
-				//finish daily target, record daily target here.
+				//check subAgainlist for current session
+				if (subAgainWords.Count > 0) {
+					curListName = CURRENT_LIST_NAME.LIST_AGAIN;
+					againWords.AddRange(subAgainWords.ToArray());
+					currentWord = againWords.ElementAt(currentWordInd);
 
-				//close study screen
-				SceneManager.UnloadSceneAsync("Study");
+					subAgainWords.Clear();
+
+				} else {
+					//finish daily target, record daily target here.
+					//check streak
+					FirebaseHelper.getInstance().checkStreakAfterLearningFinished(isStreak => {
+						Debug.Log("Is Count streak :: " +isStreak.ToString());
+
+						//close study screen
+						unloadSceneAsync();
+					});	
+				}
+
 			} else {
-//				currentWordInd++;
 				currentWord = newWords.ElementAt(currentWordInd);
 			}
 		}
@@ -192,11 +209,6 @@ public class StudyController : MonoBehaviour
 		if (currentWord.Length > 0) {
 			fetchWordUserLearningInfo();
 
-		} else {
-			//check streak
-			FirebaseHelper.getInstance().checkStreakAfterLearningFinished(isStreak => {
-				Debug.Log("Is Count streak :: " +isStreak.ToString());
-			});
 		}
     }
 
@@ -212,6 +224,7 @@ public class StudyController : MonoBehaviour
 		reviewWords.Clear();
 		againWords.Clear();
 		newWords.Clear();
+		subAgainWords.Clear();
 
 		curListName  = CURRENT_LIST_NAME.LIST_REVIEW; //reset, review is default
 		bool found = false;
@@ -255,7 +268,7 @@ public class StudyController : MonoBehaviour
 
 						//close screen
 						Debug.Log("UnloadSceneAsync(\"Study\")");
-						SceneManager.UnloadSceneAsync("Study");
+						unloadSceneAsync();
 
 					} else {
 						//fetch word info and learning progress
@@ -327,6 +340,7 @@ public class StudyController : MonoBehaviour
 			webView = webViewGameObject.AddComponent<UniWebView>();
 
 		} else {
+			webViewGameObject.SetActive(true);
 			webView = webViewGameObject.GetComponent<UniWebView>();
 
 			if (webView == null) {
@@ -350,4 +364,26 @@ public class StudyController : MonoBehaviour
         webView.Show();
     }
 
+	private void updateAgainFieldInLearningProgressToday() {
+		List<string> tmp = new List<string>();
+
+		tmp.AddRange(againWords.ToArray());
+		tmp.AddRange(subAgainWords.ToArray());
+	
+		FirebaseHelper.getInstance().updateAgainFieldInLearningProgressToday(tmp.ToArray());
+	}
+
+	private void unloadSceneAsync() {
+		SceneManager.UnloadSceneAsync("Study");
+		//dont knwon why webview still display after unload scene
+//		GameObject webViewGameObject = GameObject.Find("WebView");
+//
+//		if (webViewGameObject != null) {
+//			UniWebView webView = webViewGameObject.GetComponent<UniWebView>();
+//
+//			if (webView != null) {
+//				webView.gameObject.SetActive(false);
+//			}
+//		}
+	}
 }

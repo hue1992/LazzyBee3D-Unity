@@ -674,40 +674,6 @@ public class FirebaseHelper  {
 		}
 	}
 
-	public void addAWordToAgainList (string word) {
-		if (signedIn == true) {
-
-			FirebaseDatabase.DefaultInstance
-				.GetReference(LEARNING_PROGRESS)
-				.Child(firebaseUser.UserId)
-				.Child(PROGRESS_AGAIN_KEY)
-				.GetValueAsync().ContinueWith(task => {
-					if (task.IsFaulted) {
-						// Handle the error...
-						Debug.Log("addAWordToAgainList :: task :: error" + task.ToString());
-
-					} else if (task.IsCompleted) {
-						DataSnapshot snapshot = task.Result;
-						Debug.Log("addAWordToAgainList :: " + snapshot.Key);
-
-						string againList = snapshot.GetRawJsonValue().Trim('"');
-						againList = String.Format("{0},{1}", againList, word);
-
-						Dictionary<string, object> newAgainList = new Dictionary<string, object> ();
-						newAgainList[PROGRESS_AGAIN_KEY] = againList;
-
-						FirebaseDatabase.DefaultInstance
-							.GetReference(LEARNING_PROGRESS)
-							.Child(firebaseUser.UserId)
-							.Child(PROGRESS_AGAIN_KEY)
-							.UpdateChildrenAsync(newAgainList);
-					}
-				});
-		} else {
-			Debug.Log("No user is signed in");
-		}
-	}
-
 	public void updateAgainList (string[] words) {
 		if (signedIn == true) {
 
