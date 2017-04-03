@@ -107,6 +107,7 @@ public class HomeController : MonoBehaviour {
 	public void OnBtnStartClickHandle () {
 		SceneManager.LoadScene("Study", LoadSceneMode.Additive);
 	}
+<<<<<<< Updated upstream
 
 	private void _timerElapsed(object sender, ElapsedEventArgs e)
 	{
@@ -116,4 +117,10 @@ public class HomeController : MonoBehaviour {
 			
 		}
 	}
+=======
+    public void OnBtnSettingClickHandle()
+    {
+        SceneManager.LoadScene("Setting", LoadSceneMode.Additive);
+    }
+>>>>>>> Stashed changes
 }
