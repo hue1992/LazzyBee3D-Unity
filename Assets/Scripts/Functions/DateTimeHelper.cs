@@ -33,4 +33,20 @@ public class DateTimeHelper {
 	public static int getEndOfDayInSec () {
 		return (getBeginOfDayInSec() + 24*3600);
 	}
+
+	public static string getDayOfWeek(int date) {
+		System.DateTime start 		= new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
+		System.DateTime dateTime	= start.AddMilliseconds(date).ToLocalTime();
+
+		string res = dateTime.DayOfWeek.ToString();
+
+		if (res != null && res.Length > 0) {
+			res = res.Substring(0, 3);
+
+		} else {
+			res = "";
+		}
+
+		return res;
+	}
 }

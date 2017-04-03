@@ -11,22 +11,33 @@ public class HomeController : MonoBehaviour {
 
 		int reviewCount = 0;
 		int newCount = 0;
+		int againCount = 0;
+
 		FirebaseHelper.getInstance().prepareInreviewList(TemporarilyStatus.getInstance().total_card_a_day,
 			reviewRes => {
+		
 				reviewCount = reviewRes;
 				Debug.Log("Review count :: " +reviewRes);
 
-				newCount = TemporarilyStatus.getInstance().total_card_a_day - reviewCount;
-				if (newCount > TemporarilyStatus.getInstance().new_card_a_day) {
-					newCount = TemporarilyStatus.getInstance().new_card_a_day;
-				}
+				againCount = TemporarilyStatus.getInstance().total_card_a_day - reviewCount;
+				FirebaseHelper.getInstance().prepareAgainList(againCount,
+					againRes => {
+						
+						againCount = againRes;
+						Debug.Log("Again count :: " +againRes);
 
-				FirebaseHelper.getInstance().prepareListNewWordsToLearn(newCount,
-					newRes => {
+						newCount = TemporarilyStatus.getInstance().total_card_a_day - againCount - reviewCount;
+						if (newCount > TemporarilyStatus.getInstance().new_card_a_day) {
+							newCount = TemporarilyStatus.getInstance().new_card_a_day;
+						}
 
-						Debug.Log("New count :: " +newRes);
+						FirebaseHelper.getInstance().prepareListNewWordsToLearn(newCount,
+							newRes => {
+
+								Debug.Log("New count :: " +newRes);
+							});
 					});
-			});
+		});
 	}
 
 	/* for testing - begin */

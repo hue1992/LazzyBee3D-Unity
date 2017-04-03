@@ -28,6 +28,12 @@ public class StudyController : MonoBehaviour
     public Button btnHard;
     public Button btnNormal;
     public Button btnEasy;
+
+	public Text titleText;
+	public Text newText;
+	public Text againText;
+	public Text reviewText;
+
     public string htmlText;
 
     void Start() {
@@ -38,14 +44,18 @@ public class StudyController : MonoBehaviour
 	void Update() {
 		//update title screen
 		if (curListName == CURRENT_LIST_NAME.LIST_REVIEW) {
-			
+			titleText.text = "Review";
 
 		} else if (curListName == CURRENT_LIST_NAME.LIST_AGAIN) {
-			
+			titleText.text = "Again";
 
 		} else if (curListName == CURRENT_LIST_NAME.LIST_NEW) {
-			
-		} 
+			titleText.text = "New word";
+		}
+
+		newText.text 	= newWords.Count.ToString();
+		againText.text 	= againWords.Count.ToString();
+		reviewText.text	= reviewWords.Count.ToString();
 	}
 
  
@@ -73,6 +83,9 @@ public class StudyController : MonoBehaviour
 			.updateWordProgressWithEaseOption(currentWord,
 											wordUserLearning.wordProgress,
 											CommonDefine.OPTION_AGAIN);
+		//add to again queue (add to the end of queue)
+		//if user is learning in again queue, it it not a problem because this word will be removed in endSessionStudy function and update to db
+		againWords.Add(currentWord);
 
 		endSessionStudy();
     }
@@ -142,7 +155,7 @@ public class StudyController : MonoBehaviour
 				againWords.RemoveAt(currentWordInd);
 				needRemoveWord = false;
 
-				FirebaseHelper.getInstance().updateAgainList(againWords.ToArray());
+				FirebaseHelper.getInstance().updateAgainFieldInLearningProgressToday(againWords.ToArray());
 			}
 
 			if (againWords.Count == 0) {

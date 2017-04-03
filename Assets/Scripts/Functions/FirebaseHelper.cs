@@ -152,6 +152,7 @@ public class FirebaseHelper  {
 				user.userID = firebaseUser.UserId;
 				user.username = firebaseUser.DisplayName;
 				user.firebase_token = firebaseUser.RefreshToken;
+				user.isAnnonymous = firebaseUser.IsAnonymous;
 
 				createNewUser(user);
 
@@ -192,6 +193,7 @@ public class FirebaseHelper  {
 				user.email 			= firebaseUser.Email;
 				user.username 		= firebaseUser.DisplayName;
 				user.firebase_token = firebaseUser.RefreshToken;
+				user.isAnnonymous 	= firebaseUser.IsAnonymous;
 
 				createNewUser(user);
 
@@ -199,7 +201,6 @@ public class FirebaseHelper  {
 			});
 		} else {
 			Debug.Log("there is a user logged in already");
-
 			callbackWhenDone(null);
 		}
 	}
@@ -239,6 +240,7 @@ public class FirebaseHelper  {
 				newInfo.email 			= firebaseUser.Email;
 				newInfo.username 		= firebaseUser.DisplayName;
 				newInfo.firebase_token 	= firebaseUser.RefreshToken;
+				newInfo.isAnnonymous 	= firebaseUser.IsAnonymous;
 
 				updateUserInfo(newInfo);
 
@@ -290,9 +292,10 @@ public class FirebaseHelper  {
 					Debug.LogFormat("Credentials successfully unlinked from user: {0} ({1})",
 						firebaseUser.DisplayName, firebaseUser.UserId);
 
-					newInfo.userID = firebaseUser.UserId;
-					newInfo.username = firebaseUser.DisplayName;
-					newInfo.firebase_token = firebaseUser.RefreshToken;
+					newInfo.userID 			= firebaseUser.UserId;
+					newInfo.username 		= firebaseUser.DisplayName;
+					newInfo.firebase_token 	= firebaseUser.RefreshToken;
+					newInfo.isAnnonymous 	= firebaseUser.IsAnonymous;
 
 					//call back
 					callbackWhenDone(newInfo);
@@ -331,9 +334,10 @@ public class FirebaseHelper  {
 			Debug.Log("UserId :: " + firebaseUser.UserId);
 
 			UserInfo userRes = new UserInfo();
-			userRes.userID = firebaseUser.UserId;
-			userRes.username = firebaseUser.DisplayName;
-			userRes.firebase_token = firebaseUser.RefreshToken;
+			userRes.userID 			= firebaseUser.UserId;
+			userRes.username 		= firebaseUser.DisplayName;
+			userRes.firebase_token 	= firebaseUser.RefreshToken;
+			userRes.isAnnonymous 	= firebaseUser.IsAnonymous;
 
 			TemporarilyStatus.getInstance().userInfo = userRes;
 
@@ -380,6 +384,7 @@ public class FirebaseHelper  {
 			userUpdate["username"] 			= user.username;
 			userUpdate["email"] 			= user.email;
 			userUpdate["firebase_token"] 	= user.firebase_token;
+			userUpdate["isAnonymous"] 		= user.isAnnonymous;
 
 			FirebaseDatabase.DefaultInstance
 				.GetReference(USERS)
@@ -554,6 +559,29 @@ public class FirebaseHelper  {
 		}
 	}
 
+	public void updateAgainFieldInLearningProgressToday (string[] words) {
+
+		if (words != null) {
+			getCurrentDatetimeInAgainField(oldDate => {
+				//when user still learning with old data (yesterday data..)
+				//still update list words for old date
+				//when user finish learning (with old date or new date), check this date to count streak
+				if (oldDate > 0) {
+					Dictionary<string, object> newwordsUpdate = new Dictionary<string, object> ();
+					newwordsUpdate[PROGRESS_WORD_KEY] = String.Join(",", words);
+					newwordsUpdate[PROGRESS_DATE_KEY] = oldDate;
+					newwordsUpdate[PROGRESS_COUNT_KEY] = words.Length;
+
+					FirebaseDatabase.DefaultInstance
+						.GetReference(LEARNING_PROGRESS)
+						.Child(firebaseUser.UserId)
+						.Child(PROGRESS_AGAIN_KEY)
+						.UpdateChildrenAsync(newwordsUpdate);
+				}
+			});
+		}
+	}
+
 	//get new words list from /newwords field
 	//after open learning screen, get newwords list from "learning_progress/newwords"
 	public void getCurrentNewWordsList (System.Action<string[]> callbackWhenDone) {
@@ -716,19 +744,21 @@ public class FirebaseHelper  {
 					} else if (task.IsCompleted) {
 						DataSnapshot snapshot = task.Result;
 						Debug.Log("getAgainList :: " + snapshot.Key);
-						string againList = snapshot.GetRawJsonValue();
 
-						if (againList != null && againList.Length > 0) {
-							againList = againList.Trim('"');
+						string worsString = snapshot.Child(PROGRESS_WORD_KEY).GetRawJsonValue();
+
+						if (worsString != null && worsString.Length > 0) {
+							worsString = worsString.Trim('"');
 							char[] splitters = { ',' };
-							string[] resList = againList.Split(splitters, StringSplitOptions.RemoveEmptyEntries);
 
-							if (resList != null && resList.Length > 0) {
-								Debug.Log("resList # null");
+							string[] resList = worsString.Split(splitters, StringSplitOptions.RemoveEmptyEntries);
+
+							if ((resList != null) && (resList.Length > 0)) {
+								Debug.Log("getAgainList ::resList # null");
 								callbackWhenDone(resList);
 
 							} else {
-								Debug.Log("resList == null");
+								Debug.Log("getAgainList :: resList == null");
 								callbackWhenDone(new string[0]);
 							}
 
@@ -745,7 +775,7 @@ public class FirebaseHelper  {
 	}
 
 	//update inrview for a user in LEARNING_PROGRESS
-	public bool updateInreviewFieldInLearningProgress(string[] words, int date) {
+	private bool _updateInreviewFieldInLearningProgress(string[] words, int date) {
 		bool res = false;
 		//refer to the word them update its queue field
 		if (signedIn == true) {
@@ -887,7 +917,7 @@ public class FirebaseHelper  {
 
 		_prepareInreviewList(limit, words => {
 			int date = DateTimeHelper.getBeginOfDayInSec();
-			updateInreviewFieldInLearningProgress(words, date);
+			_updateInreviewFieldInLearningProgress(words, date);
 			callbackWhenDone(words.Length);
 		});
 	}
@@ -908,14 +938,14 @@ public class FirebaseHelper  {
 			.GetValueAsync().ContinueWith(task => {
 				if (task.IsFaulted) {
 					// Handle the error...
-					Debug.Log("getListWords :: task :: error" + task.ToString());
+					Debug.Log("_prepareInreviewList :: task :: error" + task.ToString());
 					callbackWhenDone(new string[0]);
 
 				} else if (task.IsCompleted) {
 					DataSnapshot snapshot = task.Result;
 					List<string> wordsList = new List<string>();
 					// Do something with snapshot...
-					Debug.Log("snapshot.Children :: count :: " + snapshot.ChildrenCount);
+					Debug.Log("_prepareInreviewList :: snapshot.Children :: count :: " + snapshot.ChildrenCount);
 					foreach (var item in snapshot.Children) {
 						Debug.Log("snapshot.Children :: " + item.Key);
 
@@ -927,6 +957,81 @@ public class FirebaseHelper  {
 					callbackWhenDone(wordsList.ToArray());
 				}
 			});
+	}
+
+	public void prepareAgainList(int limit, System.Action<int> callbackWhenDone) {
+		Debug.Log("FirebaseHelper :: prepareAgainList");
+		if (limit > 20) {	//due to limited quota
+			limit = 20;
+		}
+
+		_prepareAgainList(limit, words => {
+			int date = DateTimeHelper.getBeginOfDayInSec();
+			_updateAgainFieldInLearningProgress(words, date);
+			callbackWhenDone(words.Length);
+		});
+	}
+
+	private void _prepareAgainList (int limit, System.Action<string[]> callbackWhenDone) {
+		Debug.Log("FirebaseHelper :: _prepareAgainList");
+		if (limit > 20) {	//due to limited quota
+			limit = 20;
+		}
+		//where queue = %d AND due <= %f ORDER BY level LIMIT %ld", QUEUE_REVIEW, [self getEndOfDayInSec], (long)TOTAL_WORDS_A_DAY_MAX
+		FirebaseDatabase.DefaultInstance
+			.GetReference(LEARNING_PROGRESS)
+			.Child(firebaseUser.UserId)
+			.Child(PROGRESS_INPROGRESS_KEY)
+			.OrderByChild("queue")
+			.EqualTo(CommonDefine.QUEUE_AGAIN)
+			.LimitToFirst(limit)
+			.GetValueAsync().ContinueWith(task => {
+				if (task.IsFaulted) {
+					// Handle the error...
+					Debug.Log("_prepareAgainList :: task :: error" + task.ToString());
+					callbackWhenDone(new string[0]);
+
+				} else if (task.IsCompleted) {
+					DataSnapshot snapshot = task.Result;
+					List<string> wordsList = new List<string>();
+					// Do something with snapshot...
+					Debug.Log("_prepareAgainList :: snapshot.Children :: count :: " + snapshot.ChildrenCount);
+					foreach (var item in snapshot.Children) {
+						Debug.Log("snapshot.Children :: " + item.Key);
+
+						wordsList.Add(item.Key);
+					}
+
+					callbackWhenDone(wordsList.ToArray());
+				}
+			});
+	}
+
+	//update /again for a user in LEARNING_PROGRESS
+	private bool _updateAgainFieldInLearningProgress(string[] words, int date) {
+		bool res = false;
+		//refer to the word them update its queue field
+		if (signedIn == true) {
+			if (words != null && date > 0) {
+				Dictionary<string, object> newwordsUpdate = new Dictionary<string, object> ();
+				newwordsUpdate[PROGRESS_WORD_KEY] = String.Join(",", words);
+				newwordsUpdate[PROGRESS_DATE_KEY] = date;
+				newwordsUpdate[PROGRESS_COUNT_KEY] = words.Length;
+
+				FirebaseDatabase.DefaultInstance
+					.GetReference(LEARNING_PROGRESS)
+					.Child(firebaseUser.UserId)
+					.Child(PROGRESS_AGAIN_KEY)
+					.UpdateChildrenAsync(newwordsUpdate);
+
+				res = true;
+			}
+		} else {
+			Debug.Log("No user is signed in");
+			res = false;
+		}
+
+		return res;
 	}
 
 	//call when user tap on one of 4 buttons (again, easy, normal, hard)
@@ -964,8 +1069,22 @@ public class FirebaseHelper  {
 		}
 	}
 
+	//get datetime in /again
+	public void getCurrentDatetimeInAgainField (System.Action<int> callbackWhenDone) {
+		Debug.Log("FirebaseHelper :: getCurrentDatetimeInAgainField");
+		if (signedIn == true) {
+			_getCurrentDatetimeOfLearningProgress(PROGRESS_AGAIN_KEY, date => {
+				Debug.Log("FirebaseHelper :: getCurrentDatetimeInAgainField :: date :: " +date.ToString());
+				callbackWhenDone(date);
+			});
+
+		} else {
+			callbackWhenDone(0);
+		}
+	}
+
 	//get datetime in /newwords or /inreview (to check whether data is obsolete or not)
-	//fieldPath = "newwords" or "inreview"
+	//fieldPath = "newwords" or "inreview" or /again
 	private void _getCurrentDatetimeOfLearningProgress (string fieldPath, System.Action<int> callbackWhenDone) {
 		Debug.Log("_getCurrentDatetimeOfLearningProgress");
 		if (signedIn == true) {
@@ -1211,49 +1330,53 @@ public class FirebaseHelper  {
 	//time_to_show_answer
 	public void getUserSettings (System.Action<bool> callbackWhenDone) {
 		Debug.Log("FirebaseHelper :: getUserSettings :: " +firebaseUser.UserId);
+		try {
+			if (signedIn == true) {
+				Debug.Log("FirebaseHelper :: getUserSettings :: signed in");
 
-		if (signedIn == true) {
-			FirebaseDatabase.DefaultInstance
-				.GetReference(SETTINGS)
-				.Child(firebaseUser.UserId)
-				.GetValueAsync().ContinueWith(task => {
-					if (task.IsFaulted) {
-						// Handle the error...
-						Debug.Log("getUserSettings :: task :: error" + task.ToString());
-						callbackWhenDone(false);
+				FirebaseDatabase.DefaultInstance
+					.GetReference(SETTINGS)
+					.Child(firebaseUser.UserId)
+					.GetValueAsync().ContinueWith(task => {
+						Debug.Log("FirebaseHelper :: getUserSettings :: ContinueWith");
+						if (task.IsFaulted) {
+							// Handle the error...
+							Debug.Log("getUserSettings :: task :: error" + task.ToString());
+							callbackWhenDone(false);
 
-					} else if (task.IsCompleted) {
-						Debug.Log("FirebaseHelper :: getUserSettings :: success");
+						} else if (task.IsCompleted) {
 
-						DataSnapshot snapshot = task.Result;
-						Debug.Log("snapshot :: getUserSettings :: " + snapshot.Key);
+							DataSnapshot snapshot = task.Result;
+							Debug.Log("snapshot :: getUserSettings :: " + snapshot.Key);
 
-						if (snapshot.GetRawJsonValue() != null) {
+							if (snapshot.GetRawJsonValue() != null) {
+								Debug.Log("FirebaseHelper :: getUserSettings :: success");
+								TemporarilyStatus.getInstance().auto_play_sound 	= Int32.Parse(snapshot.Child(SETTINGS_AUTOPLAY_KEY).GetRawJsonValue().Trim('"'));
+								TemporarilyStatus.getInstance().my_level  			= Int32.Parse(snapshot.Child(SETTINGS_MY_LEVEL_KEY).GetRawJsonValue().Trim('"'));
+								TemporarilyStatus.getInstance().new_card_a_day 		= Int32.Parse(snapshot.Child(SETTINGS_NEW_CARD_KEY).GetRawJsonValue().Trim('"'));
+								TemporarilyStatus.getInstance().total_card_a_day 	= Int32.Parse(snapshot.Child(SETTINGS_TOTAL_CARD_KEY).GetRawJsonValue().Trim('"'));
+								TemporarilyStatus.getInstance().time_to_show_answer	= Int32.Parse(snapshot.Child(SETTINGS_TIME_SHOW_ANSWER_KEY).GetRawJsonValue().Trim('"'));
+								TemporarilyStatus.getInstance().notification	 	= Int32.Parse(snapshot.Child(SETTINGS_NOTIFICATION_KEY).GetRawJsonValue().Trim('"'));
 
-							TemporarilyStatus.getInstance().auto_play_sound 	= Int32.Parse(snapshot.Child(SETTINGS_AUTOPLAY_KEY).GetRawJsonValue().Trim('"'));
-							TemporarilyStatus.getInstance().my_level  			= Int32.Parse(snapshot.Child(SETTINGS_MY_LEVEL_KEY).GetRawJsonValue().Trim('"'));
-							TemporarilyStatus.getInstance().new_card_a_day 		= Int32.Parse(snapshot.Child(SETTINGS_NEW_CARD_KEY).GetRawJsonValue().Trim('"'));
-							TemporarilyStatus.getInstance().total_card_a_day 	= Int32.Parse(snapshot.Child(SETTINGS_TOTAL_CARD_KEY).GetRawJsonValue().Trim('"'));
-							TemporarilyStatus.getInstance().time_to_show_answer	= Int32.Parse(snapshot.Child(SETTINGS_TIME_SHOW_ANSWER_KEY).GetRawJsonValue().Trim('"'));
-							TemporarilyStatus.getInstance().notification	 	= Int32.Parse(snapshot.Child(SETTINGS_NOTIFICATION_KEY).GetRawJsonValue().Trim('"'));
+								callbackWhenDone(true);
 
-							callbackWhenDone(true);
+							} else {
+								Debug.Log("FirebaseHelper :: getUserSettings :: no settings");
+								callbackWhenDone(false);
+							}
 
 						} else {
-							Debug.Log("FirebaseHelper :: getUserSettings :: no settings");
+							Debug.Log("FirebaseHelper :: getUserSettings :: error");
 							callbackWhenDone(false);
 						}
-
-
-
-					} else {
-						Debug.Log("FirebaseHelper :: getUserSettings :: error");
-						callbackWhenDone(false);
-					}
-				});
-			
-		} else {
-			callbackWhenDone(false);
+					});
+				
+			} else {
+				Debug.Log("FirebaseHelper :: getUserSettings :: No user is signed in");
+				callbackWhenDone(false);
+			}
+		} catch (Exception e) {
+			Debug.Log(String.Format("handleSigninFBResult :: exception :: {0}", e.ToString()));
 		}
 	}
 
