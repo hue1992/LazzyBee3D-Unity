@@ -1,10 +1,12 @@
-﻿using System.Collections;
+﻿using System.Timers;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Facebook.Unity;
 
 public class HomeController : MonoBehaviour {
+	Timer timer = new Timer();
 
 	private void _loadTodayData () {
 		Debug.Log("loadTodayData");
@@ -39,59 +41,6 @@ public class HomeController : MonoBehaviour {
 					});
 		});
 	}
-
-	/* for testing - begin */
-	/*
-	private void InitCallback () {
-		if (FB.IsInitialized) {
-			// Signal an app activation App Event
-			FB.ActivateApp();
-			// Continue with Facebook SDK
-			// ...
-		} else {
-			Debug.Log("Failed to Initialize the Facebook SDK");
-		}
-	}
-
-	private void OnHideUnity (bool isGameShown)	{
-		if (!isGameShown) {
-			// Pause the game - we will need to hide
-			Time.timeScale = 0;
-		} else {
-			// Resume the game - we're getting focus again
-			Time.timeScale = 1;
-		}
-	}
-
-	public void OnLoginButtonFBClick()	{
-		var perms = new List<string>(){"public_profile", "email", "user_friends"};
-		FB.LogInWithReadPermissions(perms, AuthCallback);
-	}
-
-	private void AuthCallback (ILoginResult result) {
-		if (FB.IsLoggedIn) {
-			// AccessToken class will have session details
-			var aToken = Facebook.Unity.AccessToken.CurrentAccessToken;
-
-			FirebaseHelper.getInstance().loginWithFacebook(aToken.TokenString, handleSigninResult);
-
-		} else {
-			Debug.Log("User cancelled login");
-//			test.text = "AuthCallback failed";
-		}
-	}
-
-	void handleSigninResult(UserInfo userInfo) {
-		Debug.Log("handleSigninResult");
-//		if (userInfo != null && userInfo.userID != "") {
-//			test.text = String.Format("fb login successfully :: {0}", userInfo.userID);
-//		} else {
-//			test.text = "fb login failed";
-//		}
-
-	}
-	*/
-	/* for testing - end */
 
 	// Use this for initialization
 	void Start() {
@@ -130,6 +79,8 @@ public class HomeController : MonoBehaviour {
 
 				if (date != curDate) {
 					Debug.Log("HomeController :: load new data");
+					TemporarilyStatus.getInstance().timeLoadedData = date;	//in timer handler function, if current time is greater than this time 86400, reload data.
+
 					_loadTodayData();
 
 				} else {
@@ -144,10 +95,25 @@ public class HomeController : MonoBehaviour {
 					FirebaseHelper.getInstance().updateUserStreaks();
 				}
 			});
+
+			//set timer to check date time, if it is changed to new day, reload data
+			timer.Interval = 1000;	//millisecond
+			timer.Enabled = true; 
+			timer.Elapsed += new ElapsedEventHandler(_timerElapsed);
+			timer.Start(); 
 		}
 	}
 	
 	public void OnBtnStartClickHandle () {
 		SceneManager.LoadScene("Study", LoadSceneMode.Additive);
+	}
+
+	private void _timerElapsed(object sender, ElapsedEventArgs e)
+	{
+		int curDate = DateTimeHelper.getCurrentDateTimeInSeconds();
+
+		if (curDate >= TemporarilyStatus.getInstance().timeLoadedData + CommonDefine.SECONDS_PERDAY) {
+			
+		}
 	}
 }

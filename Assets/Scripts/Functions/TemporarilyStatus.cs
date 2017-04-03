@@ -20,6 +20,9 @@ public class TemporarilyStatus {
 	public string[] days 			= null;
 	public int streaks 				= 0;
 
+	//time that data was loaded
+	public int timeLoadedData		= 0;
+
 	private static TemporarilyStatus _instance = null;
 
 	public static TemporarilyStatus getInstance() {
