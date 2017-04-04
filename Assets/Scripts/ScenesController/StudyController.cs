@@ -374,6 +374,18 @@ public class StudyController : MonoBehaviour
 	}
 
 	private void unloadSceneAsync() {
+		//set isShowingStudyScene = false;
+		Scene home = SceneManager.GetSceneByName("Home");
+		GameObject[] gameObjs = home.GetRootGameObjects();
+
+		foreach(GameObject gObj in gameObjs) {
+			if (gObj.name.Equals("ScriptHolder") == true) {
+				Debug.Log("Study Controller :: ScriptHolder found");
+				HomeController homeController = gObj.GetComponent<HomeController>();
+				homeController.isShowingStudyScene = false;
+			}	
+		}
+
 		SceneManager.UnloadSceneAsync("Study");
 		//dont knwon why webview still display after unload scene
 //		GameObject webViewGameObject = GameObject.Find("WebView");
@@ -385,5 +397,9 @@ public class StudyController : MonoBehaviour
 //				webView.gameObject.SetActive(false);
 //			}
 //		}
+	}
+
+	void OnDestroy() {
+		Debug.Log("Study Controller :: OnDestroy");
 	}
 }
