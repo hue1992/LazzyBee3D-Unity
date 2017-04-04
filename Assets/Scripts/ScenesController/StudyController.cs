@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using Firebase.Database;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -12,6 +13,7 @@ public class StudyController : MonoBehaviour
 		LIST_AGAIN,
 		LIST_NEW
 	};
+	public GameObject loadingIndicator;
 
 	private List<string> newWords = new List<string>();
 	private List<string> againWords = new List<string>();
@@ -36,7 +38,7 @@ public class StudyController : MonoBehaviour
 	public Text againText;
 	public Text reviewText;
 
-    public string htmlText;
+    private string htmlText;
 
     void Start() {
         handlerButton();
@@ -134,6 +136,8 @@ public class StudyController : MonoBehaviour
 		currentWord = "";
 		wordUserLearning = null;
 
+		showHideLoadingIndicator(true);
+
 		if (curListName == CURRENT_LIST_NAME.LIST_REVIEW) {
 			if (needRemoveWord == true) {
 				reviewWords.RemoveAt(currentWordInd);
@@ -197,6 +201,7 @@ public class StudyController : MonoBehaviour
 						Debug.Log("Is Count streak :: " +isStreak.ToString());
 
 						//close study screen
+						showHideLoadingIndicator(false);
 						unloadSceneAsync();
 					});	
 				}
@@ -209,6 +214,8 @@ public class StudyController : MonoBehaviour
 		if (currentWord.Length > 0) {
 			fetchWordUserLearningInfo();
 
+		} else {
+			showHideLoadingIndicator(false);
 		}
     }
 
@@ -229,59 +236,67 @@ public class StudyController : MonoBehaviour
 		curListName  = CURRENT_LIST_NAME.LIST_REVIEW; //reset, review is default
 		bool found = false;
 
-		FirebaseHelper.getInstance().getCurrentReviewList(rwords => {
-			reviewWords.AddRange(rwords);
+		showHideLoadingIndicator(true);
+		try {
+			FirebaseHelper.getInstance().getCurrentReviewList(rwords => {
+				reviewWords.AddRange(rwords);
 
 
-			FirebaseHelper.getInstance().getAgainList(agwords => {
-				againWords.AddRange(agwords);
+				FirebaseHelper.getInstance().getAgainList(agwords => {
+					againWords.AddRange(agwords);
 
 
-				FirebaseHelper.getInstance().getCurrentNewWordsList(nwords => {
-					newWords.AddRange(nwords);
+					FirebaseHelper.getInstance().getCurrentNewWordsList(nwords => {
+						newWords.AddRange(nwords);
 
-					Debug.Log("reviewWords :: count :: " + reviewWords.Count);
-					Debug.Log("againWords :: count :: " + againWords.Count);
-					Debug.Log("newWords :: count :: " + newWords.Count);
+						Debug.Log("reviewWords :: count :: " + reviewWords.Count);
+						Debug.Log("againWords :: count :: " + againWords.Count);
+						Debug.Log("newWords :: count :: " + newWords.Count);
 
-					if (reviewWords.Count > 0) {
-						Debug.Log("reviewWords :: " + reviewWords);
-						curListName  = CURRENT_LIST_NAME.LIST_REVIEW;
-						currentWord = reviewWords.ElementAt(currentWordInd);
-						found = true;
+						if (reviewWords.Count > 0) {
+							Debug.Log("reviewWords :: " + reviewWords);
+							curListName  = CURRENT_LIST_NAME.LIST_REVIEW;
+							currentWord = reviewWords.ElementAt(currentWordInd);
+							found = true;
 
-					} else if (againWords.Count > 0) {
-						Debug.Log("againWords :: " + againWords);
-						curListName  = CURRENT_LIST_NAME.LIST_AGAIN;
-						currentWord = againWords.ElementAt(currentWordInd);
-						found = true;
+						} else if (againWords.Count > 0) {
+							Debug.Log("againWords :: " + againWords);
+							curListName  = CURRENT_LIST_NAME.LIST_AGAIN;
+							currentWord = againWords.ElementAt(currentWordInd);
+							found = true;
 
-					} else if (newWords.Count > 0) {
-						Debug.Log("newWords :: " + newWords);
-						curListName  = CURRENT_LIST_NAME.LIST_NEW;
-						currentWord = newWords.ElementAt(currentWordInd);
-						found = true;
-					}
+						} else if (newWords.Count > 0) {
+							Debug.Log("newWords :: " + newWords);
+							curListName  = CURRENT_LIST_NAME.LIST_NEW;
+							currentWord = newWords.ElementAt(currentWordInd);
+							found = true;
+						}
 
-					if (found == false) {
-						//show alert: no word to learn
+						if (found == false) {
+							showHideLoadingIndicator(false);
+							//show alert: no word to learn
 
-						//close screen
-						Debug.Log("UnloadSceneAsync(\"Study\")");
-						unloadSceneAsync();
+							//close screen
+							Debug.Log("UnloadSceneAsync(\"Study\")");
+							unloadSceneAsync();
 
-					} else {
-						//fetch word info and learning progress
-						fetchWordUserLearningInfo();
-					}
+						} else {
+							//fetch word info and learning progress
+							fetchWordUserLearningInfo();
+						}
 
+					});
 				});
 			});
-		});
+		} catch (Exception e) {
+			Debug.Log("StudyController :: getUserData :: exception :: " +e.ToString());
+			showHideLoadingIndicator(false);
+		}
     }
 
 	private void fetchWordUserLearningInfo() {
 		Debug.Log("fetchWordUserLearningInfo :: " +currentWord);
+		showHideLoadingIndicator(true);
 
 		if (currentWord.Length > 0) {
 			FirebaseHelper.getInstance().fetchWordUserLearningInfo(currentWord, userLearning => {
@@ -290,7 +305,7 @@ public class StudyController : MonoBehaviour
 					wordUserLearning = userLearning;
 
 					Debug.Log("wordUserLearning :: wordInfo.word :: " +wordUserLearning.wordInfo.word);
-
+					showHideLoadingIndicator(false);
 					loadQuestion();
 
 				} else {
@@ -319,14 +334,14 @@ public class StudyController : MonoBehaviour
 	private void loadQuestion () {
 		htmlText = HTMLHelper.createHTMLForQuestion(wordUserLearning.wordInfo);
 
-		Debug.Log("fetchWordUserLearningInfo :: htmlText :: " +htmlText);
+		Debug.Log("loadQuestion :: htmlText :: " +htmlText);
 		LoadFromText();
 	}
 
 	private void loadAnswer () {
 		htmlText = HTMLHelper.createHTMLForAnswer(wordUserLearning.wordInfo);
 
-		Debug.Log("fetchWordUserLearningInfo :: htmlText :: " +htmlText);
+		Debug.Log("loadAnswer :: htmlText :: " +htmlText);
 		LoadFromText();
 	}
 
@@ -401,5 +416,11 @@ public class StudyController : MonoBehaviour
 
 	void OnDestroy() {
 		Debug.Log("Study Controller :: OnDestroy");
+	}
+
+	private void showHideLoadingIndicator(bool show) {
+		if (loadingIndicator != null) {
+			loadingIndicator.SetActive(show);	
+		}
 	}
 }
