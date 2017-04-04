@@ -7,6 +7,17 @@ using Facebook.Unity;
 
 public class HomeController : MonoBehaviour {
 	Timer timer = new Timer();
+	private bool needToReloadData = false;	//need to reload data when new day was come
+	[HideInInspector]public bool isShowingStudyScene = false;	//must be public to access it from study scene
+
+	//load when a new day was come or add more word to learn
+	public void loadNewData () {
+		needToReloadData = false;
+
+		int beginOfDay = DateTimeHelper.getBeginOfDayInSec();
+		TemporarilyStatus.getInstance().timeLoadedData = beginOfDay;
+		_loadTodayData();
+	}
 
 	private void _loadTodayData () {
 		Debug.Log("loadTodayData");
@@ -79,11 +90,12 @@ public class HomeController : MonoBehaviour {
 
 				if (date != curDate) {
 					Debug.Log("HomeController :: load new data");
-					TemporarilyStatus.getInstance().timeLoadedData = date;	//in timer handler function, if current time is greater than this time 86400, reload data.
+					TemporarilyStatus.getInstance().timeLoadedData = curDate;	//in timer handler function, if current time is greater than this time 86400, reload data.
 
 					_loadTodayData();
 
 				} else {
+					TemporarilyStatus.getInstance().timeLoadedData = date;
 					Debug.Log("HomeController :: do not load new data");
 				}
 			});
@@ -105,6 +117,7 @@ public class HomeController : MonoBehaviour {
 	}
 	
 	public void OnBtnStartClickHandle () {
+		isShowingStudyScene = true;
 		SceneManager.LoadScene("Study", LoadSceneMode.Additive);
 	}
 
@@ -113,7 +126,36 @@ public class HomeController : MonoBehaviour {
 		int curDate = DateTimeHelper.getCurrentDateTimeInSeconds();
 
 		if (curDate >= TemporarilyStatus.getInstance().timeLoadedData + CommonDefine.SECONDS_PERDAY) {
-			
+			needToReloadData = true;
+
+			//reload data if study scene is not on top
+			//else if study scene is on top, reload data from study scene when user finish their target
+			//if user come back home scene when they do not finish target, _timerElapsed is still called and reload data.
+			if (isShowingStudyScene == false) {
+				loadNewData();
+			}
+		}
+	}
+
+	void OnApplicationPause(bool pause) {
+		if (pause == true) {
+			Debug.Log("Home Controller :: OnBecameInvisible");
+			if (timer != null) {
+				timer.Stop();
+			}
+
+		} else {
+			Debug.Log("Home Controller :: OnBecameVisible");
+			if (timer != null) {
+				timer.Start();
+			}
+		}
+	}
+
+	void OnDestroy() {
+		Debug.Log("Home Controller :: OnDestroy");
+		if (timer != null) {
+			timer.Stop();
 		}
 	}
 }
