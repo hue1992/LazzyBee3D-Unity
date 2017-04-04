@@ -1,4 +1,5 @@
-﻿using System.Timers;
+﻿using System;
+using System.Timers;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,6 +8,8 @@ using Facebook.Unity;
 
 public class HomeController : MonoBehaviour {
 	Timer timer = new Timer();
+	public GameObject loadingIndicator;
+
 	private bool needToReloadData = false;	//need to reload data when new day was come
 	[HideInInspector]public bool isShowingStudyScene = false;	//must be public to access it from study scene
 
@@ -16,6 +19,7 @@ public class HomeController : MonoBehaviour {
 
 		int beginOfDay = DateTimeHelper.getBeginOfDayInSec();
 		TemporarilyStatus.getInstance().timeLoadedData = beginOfDay;
+		showHideLoadingIndicator(true);
 		_loadTodayData();
 	}
 
@@ -25,32 +29,36 @@ public class HomeController : MonoBehaviour {
 		int reviewCount = 0;
 		int newCount = 0;
 		int againCount = 0;
+		try {
+			FirebaseHelper.getInstance().prepareInreviewList(TemporarilyStatus.getInstance().total_card_a_day,
+				reviewRes => {
+			
+					reviewCount = reviewRes;
+					Debug.Log("Review count :: " +reviewRes);
 
-		FirebaseHelper.getInstance().prepareInreviewList(TemporarilyStatus.getInstance().total_card_a_day,
-			reviewRes => {
-		
-				reviewCount = reviewRes;
-				Debug.Log("Review count :: " +reviewRes);
+					againCount = TemporarilyStatus.getInstance().total_card_a_day - reviewCount;
+					FirebaseHelper.getInstance().prepareAgainList(againCount,
+						againRes => {
+							
+							againCount = againRes;
+							Debug.Log("Again count :: " +againRes);
 
-				againCount = TemporarilyStatus.getInstance().total_card_a_day - reviewCount;
-				FirebaseHelper.getInstance().prepareAgainList(againCount,
-					againRes => {
-						
-						againCount = againRes;
-						Debug.Log("Again count :: " +againRes);
+							newCount = TemporarilyStatus.getInstance().total_card_a_day - againCount - reviewCount;
+							if (newCount > TemporarilyStatus.getInstance().new_card_a_day) {
+								newCount = TemporarilyStatus.getInstance().new_card_a_day;
+							}
 
-						newCount = TemporarilyStatus.getInstance().total_card_a_day - againCount - reviewCount;
-						if (newCount > TemporarilyStatus.getInstance().new_card_a_day) {
-							newCount = TemporarilyStatus.getInstance().new_card_a_day;
-						}
-
-						FirebaseHelper.getInstance().prepareListNewWordsToLearn(newCount,
-							newRes => {
-
-								Debug.Log("New count :: " +newRes);
-							});
-					});
-		});
+							FirebaseHelper.getInstance().prepareListNewWordsToLearn(newCount,
+								newRes => {
+									showHideLoadingIndicator(false);
+									Debug.Log("New count :: " +newRes);
+								});
+						});
+			});
+		} catch (Exception e) {
+			showHideLoadingIndicator(false);
+			Debug.Log("HomeController :: _loadTodayData :: " +e.ToString());
+		}
 	}
 
 	// Use this for initialization
@@ -58,30 +66,31 @@ public class HomeController : MonoBehaviour {
 		//check login status again
 		//if it is logged out due to some unknown reason 
 		//it could take time to complete this progress => show loading indicator
-		Debug.Log("checkLoginStatus");
-		if (FirebaseHelper.getInstance().checkLoginStatus() == false) {
-			Debug.Log("Not logged in");
-			//show login screen
-			SceneManager.LoadScene("Login", LoadSceneMode.Single);
-
-			//for testing => login facebook is default
-			/*
-			if (!FB.IsInitialized) {
-				// Initialize the Facebook SDK
-				FB.Init(InitCallback, OnHideUnity);
-
-			} else {
-				// Already initialized, signal an app activation App Event
-				Debug.Log("Already initialized, signal an app activation App Event");
-				FB.ActivateApp();
-			}
-			*/
-
-		} else {
+//		Debug.Log("checkLoginStatus");
+//		if (FirebaseHelper.getInstance().checkLoginStatus() == false) {
+//			Debug.Log("Not logged in");
+//			//show login screen
+//			SceneManager.LoadScene("Login", LoadSceneMode.Single);
+//
+//			//for testing => login facebook is default
+//			/*
+//			if (!FB.IsInitialized) {
+//				// Initialize the Facebook SDK
+//				FB.Init(InitCallback, OnHideUnity);
+//
+//			} else {
+//				// Already initialized, signal an app activation App Event
+//				Debug.Log("Already initialized, signal an app activation App Event");
+//				FB.ActivateApp();
+//			}
+//			*/
+//
+//		} else {
 			Debug.Log("Logged in already");
 			//load today learning data
 			//get datetime in /newwords field, check if it is obsolete, prepare new list
 			//date in /newwords is always equal to /inreview
+			showHideLoadingIndicator(true);
 			FirebaseHelper.getInstance().getCurrentDatetimeInNewWordsField(date => {
 				Debug.Log("HomeController :: date :: " + date.ToString());
 
@@ -95,9 +104,11 @@ public class HomeController : MonoBehaviour {
 					_loadTodayData();
 
 				} else {
+					showHideLoadingIndicator(false);
 					TemporarilyStatus.getInstance().timeLoadedData = date;
 					Debug.Log("HomeController :: do not load new data");
 				}
+				
 			});
 
 			//can load/set streak here, because it is used right now
@@ -113,7 +124,7 @@ public class HomeController : MonoBehaviour {
 			timer.Enabled = true; 
 			timer.Elapsed += new ElapsedEventHandler(_timerElapsed);
 			timer.Start(); 
-		}
+//		}
 	}
 	
 	public void OnBtnStartClickHandle () {
@@ -156,6 +167,12 @@ public class HomeController : MonoBehaviour {
 		Debug.Log("Home Controller :: OnDestroy");
 		if (timer != null) {
 			timer.Stop();
+		}
+	}
+
+	private void showHideLoadingIndicator(bool show) {
+		if (loadingIndicator != null) {
+			loadingIndicator.SetActive(show);	
 		}
 	}
 }
