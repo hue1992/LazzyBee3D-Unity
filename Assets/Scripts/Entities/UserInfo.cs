@@ -8,10 +8,10 @@ public class UserInfo {
 	public string username;
 	public string email;
 	public string firebase_token;
-	public bool isAnnonymous;
+	public bool isAnonymous;
 
 	public UserInfo() {
-		isAnnonymous 	= true;
+		isAnonymous 	= true;
 		userID 			= "";
 		username 		= "";
 		email 			= "";

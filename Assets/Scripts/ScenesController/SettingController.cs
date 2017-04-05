@@ -28,7 +28,7 @@ public class SettingController : MonoBehaviour,IScenesController
     // Use this for initialization
     void Start()
     {
-        DebugOnScreen.Log("Test");
+//        DebugOnScreen.Log("Test");
         int my_level = TemporarilyStatus.getInstance().my_level;
         int new_card_a_day = TemporarilyStatus.getInstance().new_card_a_day;
         int total_card_a_day = TemporarilyStatus.getInstance().total_card_a_day;
@@ -37,6 +37,8 @@ public class SettingController : MonoBehaviour,IScenesController
         int notification = TemporarilyStatus.getInstance().notification;
         float speaking_speed = TemporarilyStatus.getInstance().speaking_speed;
 
+		Debug.Log("new cards a day :: " +new_card_a_day.ToString());
+
         txtMy_level.text = my_level.ToString();
         txtTotal_card_pre_day.text = total_card_a_day.ToString();
         txtMax_new_card_per_day.text = new_card_a_day.ToString();
@@ -44,14 +46,12 @@ public class SettingController : MonoBehaviour,IScenesController
         txtDisplay_meaning.text = auto_play_sound == 0 ? "ON" : "OFF";
 
         //get user setting
-        FirebaseHelper.getInstance().getUserSettings(handlerGetUserSetting);
+//        FirebaseHelper.getInstance().getUserSettings(handlerGetUserSetting); //do not need to load User settings here, User settings were loaded right away after login successfully
     }
 
-    private void handlerGetUserSetting(bool obj)
-    {
+    private void handlerGetUserSetting(bool obj) {
         DebugOnScreen.Log("get User setting:" + obj);
-        if (obj)
-        {
+        if (obj) {
             int my_level = TemporarilyStatus.getInstance().my_level;
             int new_card_a_day = TemporarilyStatus.getInstance().new_card_a_day;
             int total_card_a_day = TemporarilyStatus.getInstance().total_card_a_day;
@@ -66,16 +66,15 @@ public class SettingController : MonoBehaviour,IScenesController
             txtMax_new_card_per_day.text = new_card_a_day.ToString();
             txtAuto_play_sound.text = auto_play_sound == 0 ? "ON" : "OFF";
             txtDisplay_meaning.text = auto_play_sound == 0 ? "ON" : "OFF";
-        }
-        else
-        {
+
+        } else {
             DebugOnScreen.Log("get User setting failse");
         }
     }
 
     public void OnBackButtonClick()
     {
-        SceneManager.LoadScene("Home", LoadSceneMode.Additive);
+		SceneManager.UnloadSceneAsync("Setting");
     }
 
    

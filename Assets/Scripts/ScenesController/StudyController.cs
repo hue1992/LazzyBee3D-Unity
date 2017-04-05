@@ -444,8 +444,7 @@ public class StudyController : MonoBehaviour, IScenesController
         webView.Show();
     }
 
-    private void updateAgainFieldInLearningProgressToday()
-    {
+    private void updateAgainFieldInLearningProgressToday() {
         List<string> tmp = new List<string>();
 
         tmp.AddRange(againWords.ToArray());
@@ -484,20 +483,16 @@ public class StudyController : MonoBehaviour, IScenesController
     }
 
 
-    public void OnBackButtonClick()
-    {
-        SceneManager.LoadScene("Home", LoadSceneMode.Additive);
+    public void OnBackButtonClick() {
+		SceneManager.UnloadSceneAsync("Study");
     }
 
-    void OnDestroy()
-    {
+    void OnDestroy() {
         Debug.Log("Study Controller :: OnDestroy");
     }
 
-    private void showHideLoadingIndicator(bool show)
-    {
-        if (loadingIndicator != null)
-        {
+    private void showHideLoadingIndicator(bool show) {
+        if (loadingIndicator != null) {
             loadingIndicator.SetActive(show);
         }
     }

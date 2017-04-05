@@ -207,31 +207,6 @@ public class LoginController : MonoBehaviour {
 		}
 	}
 
-	//click unlink
-	public void OnUnlinkButtonClick () {
-		FirebaseHelper.getInstance().unlinkingAccount(userInfo => {
-			test.text = "OnUnlinkButtonClick";
-			if (userInfo != null && userInfo.userID != "") {
-				test.text = String.Format("OnUnlinkButtonClick successfully :: {0}", userInfo.userID);
-
-			} else {
-				test.text = "OnUnlinkButtonClick failed.";
-			}
-		});
-
-		//FirebaseHelper.getInstance().DisplayProviders();
-	}
-
-	public void OnLogOutButtonClick() {
-		FirebaseHelper.getInstance().signOut();
-
-		if (FB.IsLoggedIn) {
-			FB.LogOut();
-		}
-
-		test.text = "Logged out";
-	}
-
 	public void configUserSettings (System.Action callbackWhenDone) {
 		try {
 			FirebaseHelper.getInstance().getUserSettings(isExist => {
