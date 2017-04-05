@@ -205,6 +205,37 @@ public class FirebaseHelper  {
 		}
 	}
 
+	public void loginWithUserToken(string userToken, System.Action<UserInfo> callbackWhenDone) {
+		auth.SignInWithCustomTokenAsync(userToken).ContinueWith(task => {
+			UserInfo user 		= new UserInfo();
+
+			if (task.IsCanceled) {
+				Debug.LogError("LoginWithUserToken was canceled.");
+				callbackWhenDone(user);
+				return;
+			}
+			if (task.IsFaulted) {
+				Debug.LogError("LoginWithUserToken encountered an error: " + task.Exception);
+				callbackWhenDone(user);
+				return;
+			}
+
+			firebaseUser = task.Result;
+			Debug.LogFormat("LoginWithUserToken :: successfully: {0} ({1})",
+				firebaseUser.DisplayName, firebaseUser.UserId);
+
+			user.userID 		= firebaseUser.UserId;
+			user.email 			= firebaseUser.Email;
+			user.username 		= firebaseUser.DisplayName;
+			user.firebase_token = firebaseUser.RefreshToken;
+			user.isAnnonymous 	= firebaseUser.IsAnonymous;
+
+			createNewUser(user);
+
+			callbackWhenDone(user);
+		});
+	}
+
 	public void linkingAccount(string accessToken, System.Action<UserInfo> callbackWhenDone) {
 
 		if (signedIn == true) {

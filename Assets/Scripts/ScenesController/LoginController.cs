@@ -7,9 +7,11 @@ using UnityEngine.SceneManagement;
 using Facebook.Unity;
 
 public class LoginController : MonoBehaviour {
+	public GameObject loadingIndicator;
 	public Text test;
 	// Use this for initialization
 	void Start () {
+//		OnLogOutButtonClick();
 		_checkCurrentUser();
 	}
 	
@@ -48,8 +50,29 @@ public class LoginController : MonoBehaviour {
 	}
 
 	public void OnLoginButtonFBClick() {
-		var perms = new List<string>(){"public_profile", "email", "user_friends"};
-		FB.LogInWithReadPermissions(perms, AuthCallback);
+		string curUserToken = PlayerPrefsHelper.loadUserToken();
+		showHideLoadingIndicator(true);
+
+		if (curUserToken != null && curUserToken.Length > 0) {
+			FirebaseHelper.getInstance().loginWithUserToken(curUserToken, userInfo => {
+				if (userInfo != null && userInfo.userID != "") {
+					Debug.Log(String.Format("OnLoginButtonFBClick successfully :: {0}", userInfo.userID));
+					//load home screen
+					configUserSettings(() => {
+						showHideLoadingIndicator(false);
+						SceneManager.LoadScene("Home");	
+					});
+
+				} else {
+					showHideLoadingIndicator(false);
+					test.text = "Login failed";
+				}
+			});
+
+		} else {
+			var perms = new List<string>(){"public_profile", "email", "user_friends"};
+			FB.LogInWithReadPermissions(perms, AuthCallback);
+		}
 	}
 
 	private void AuthCallback (ILoginResult result) {
@@ -62,6 +85,7 @@ public class LoginController : MonoBehaviour {
 		} else {
 			Debug.Log("User cancelled login");
 			test.text = "AuthCallback failed";
+			showHideLoadingIndicator(false);
 		}
 	}
 
@@ -74,41 +98,62 @@ public class LoginController : MonoBehaviour {
 			try {
 				//load home screen
 				configUserSettings(() => {
+					showHideLoadingIndicator(false);
 					SceneManager.LoadScene("Home");	
 				});
 			} catch (Exception e) {
+				showHideLoadingIndicator(false);
 				Debug.Log(String.Format("handleSigninFBResult :: exception :: {0}", e.ToString()));
 			}
 
 		} else {
+			showHideLoadingIndicator(false);
 			test.text = "FB login failed";
 		}
-
 	}
 
 	//click login anonymous
 	public void OnLoginButtonAnonymousClick () {
-		FirebaseHelper.getInstance().loginAsAnnonymousUser(userInfo => {
-			if (userInfo != null && userInfo.userID != "") {
-//				test.text = String.Format("Anonymous login successfully :: {0}", userInfo.userID);
+		string curUserToken = PlayerPrefsHelper.loadUserToken();
+		showHideLoadingIndicator(true);
 
-				Debug.Log(String.Format("Anonymous login successfully :: {0}", userInfo.userID));
-				//load home screen
-				configUserSettings(() => {
-					SceneManager.LoadScene("Home");	
-				});
+		if (curUserToken != null && curUserToken.Length > 0) {
+			FirebaseHelper.getInstance().loginWithUserToken(curUserToken, userInfo => {
+				if (userInfo != null && userInfo.userID != "") {
+					Debug.Log(String.Format("Anonymous login successfully :: {0}", userInfo.userID));
+					//load home screen
+					configUserSettings(() => {
+						showHideLoadingIndicator(false);
+						SceneManager.LoadScene("Home");	
+					});
 
-			} else {
-				test.text = "no anonymous signed in";
-				OnLogOutButtonClick();
-			}
-		});
+				} else {
+					showHideLoadingIndicator(false);
+					test.text = "Login failed";
+				}
+			});
+
+		} else {
+			FirebaseHelper.getInstance().loginAsAnnonymousUser(userInfo => {
+				if (userInfo != null && userInfo.userID != "") {
+					Debug.Log(String.Format("Anonymous login successfully :: {0}", userInfo.userID));
+					//load home screen
+					configUserSettings(() => {
+						showHideLoadingIndicator(false);
+						SceneManager.LoadScene("Home");	
+					});
+
+				} else {
+					showHideLoadingIndicator(false);
+					test.text = "Login failed";
+				}
+			});
+		}
 	}
 
 	//just for testing
 	public void OnLinkFBAccountClick () {
-//		UserInfo user = FirebaseHelper.getInstance().checkCurrentUser();
-
+		
 		var perms = new List<string>(){"public_profile", "email", "user_friends"};
 		FB.LogInWithReadPermissions(perms, AuthCallbackForFBLinking);
 	}
@@ -146,15 +191,18 @@ public class LoginController : MonoBehaviour {
 
 	private void _checkCurrentUser () {
 		UserInfo userInfo = FirebaseHelper.getInstance().getCurrentUserInfo();
+		showHideLoadingIndicator(true);
 
 		if (userInfo != null && userInfo.userID != "") {
 			Debug.Log(String.Format("Logged in already :: {0}", userInfo.userID));
 			//load settings and load home screen
 			configUserSettings(() => {
+				showHideLoadingIndicator(false);
 				SceneManager.LoadScene("Home");	
 			});
 
 		} else {
+			showHideLoadingIndicator(false);
 			test.text = "no user signed in";
 		}
 	}
@@ -185,13 +233,24 @@ public class LoginController : MonoBehaviour {
 	}
 
 	public void configUserSettings (System.Action callbackWhenDone) {
-		FirebaseHelper.getInstance().getUserSettings(isExist => {
-			//if isExist is true, user settings are set in TemporaryStatus already
-			if (isExist == false) {
-				FirebaseHelper.getInstance().configDefaultSettings();
-			}
+		try {
+			FirebaseHelper.getInstance().getUserSettings(isExist => {
+				//if isExist is true, user settings are set in TemporaryStatus already
+				if (isExist == false) {
+					FirebaseHelper.getInstance().configDefaultSettings();
+				}
 
+				callbackWhenDone();
+			});
+		} catch (Exception e) {
+			Debug.Log("configUserSettings :: Exception :: " +e.ToString());
 			callbackWhenDone();
-		});
+		}
+	}
+
+	private void showHideLoadingIndicator(bool show) {
+		if (loadingIndicator != null) {
+			loadingIndicator.SetActive(show);	
+		}
 	}
 }
