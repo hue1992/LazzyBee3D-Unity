@@ -11,6 +11,7 @@ public class LoginController : MonoBehaviour {
 	public Text test;
 	// Use this for initialization
 	void Start () {
+//		OnLogOutButtonClick();
 		_checkCurrentUser();
 	}
 	
@@ -232,14 +233,19 @@ public class LoginController : MonoBehaviour {
 	}
 
 	public void configUserSettings (System.Action callbackWhenDone) {
-		FirebaseHelper.getInstance().getUserSettings(isExist => {
-			//if isExist is true, user settings are set in TemporaryStatus already
-			if (isExist == false) {
-				FirebaseHelper.getInstance().configDefaultSettings();
-			}
+		try {
+			FirebaseHelper.getInstance().getUserSettings(isExist => {
+				//if isExist is true, user settings are set in TemporaryStatus already
+				if (isExist == false) {
+					FirebaseHelper.getInstance().configDefaultSettings();
+				}
 
+				callbackWhenDone();
+			});
+		} catch (Exception e) {
+			Debug.Log("configUserSettings :: Exception :: " +e.ToString());
 			callbackWhenDone();
-		});
+		}
 	}
 
 	private void showHideLoadingIndicator(bool show) {
