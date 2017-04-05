@@ -74,7 +74,7 @@ public class StudyController : MonoBehaviour
 
     void ShowAnswer()
     {
-        btnShowAnswer.interactable = false;
+		btnShowAnswer.gameObject.SetActive(false);
         ButtonAnswer.SetActive(true);
 
 		loadAnswer();
@@ -128,7 +128,7 @@ public class StudyController : MonoBehaviour
     void endSessionStudy()
     {
 		Debug.Log("endSessionStudy");
-        btnShowAnswer.interactable = true;
+		btnShowAnswer.gameObject.SetActive(true);
         ButtonAnswer.SetActive(false);
 		bool needRemoveWord = true;
 
@@ -364,7 +364,7 @@ public class StudyController : MonoBehaviour
 		}
 
         webView.toolBarShow = false;
-//		webView.SetShowSpinnerWhenLoading(false);	//un-comment after have loading indicator
+		webView.SetShowSpinnerWhenLoading(false);
         return webView;
     }
 
@@ -374,8 +374,9 @@ public class StudyController : MonoBehaviour
 
         webView.LoadHTMLString(htmlText, null);
         webView.backButtonEnable = false;      
-        webView.insets.top = 200;
-        webView.insets.bottom = 180;
+        webView.insets.top = 100;
+        webView.insets.bottom = 70;
+		webView.SetBackgroundColor(new Color(1, 1, 1, 0));
         webView.Show();
     }
 
