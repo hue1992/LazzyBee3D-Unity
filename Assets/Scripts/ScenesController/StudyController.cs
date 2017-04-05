@@ -4,8 +4,9 @@ using UnityEngine.SceneManagement;
 using Firebase.Database;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 
-public class StudyController : MonoBehaviour
+public class StudyController : MonoBehaviour,IScenesController
 {
 	enum CURRENT_LIST_NAME {
 		LIST_REVIEW,
@@ -386,4 +387,9 @@ public class StudyController : MonoBehaviour
 //			}
 //		}
 	}
+
+    public void OnBackButtonClick()
+    {
+        SceneManager.LoadScene("Home", LoadSceneMode.Additive);
+    }
 }
