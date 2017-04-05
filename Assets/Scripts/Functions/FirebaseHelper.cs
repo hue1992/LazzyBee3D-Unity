@@ -152,7 +152,7 @@ public class FirebaseHelper  {
 				user.userID = firebaseUser.UserId;
 				user.username = firebaseUser.DisplayName;
 				user.firebase_token = firebaseUser.RefreshToken;
-				user.isAnnonymous = firebaseUser.IsAnonymous;
+				user.isAnonymous = firebaseUser.IsAnonymous;
 
 				createNewUser(user);
 
@@ -193,7 +193,7 @@ public class FirebaseHelper  {
 				user.email 			= firebaseUser.Email;
 				user.username 		= firebaseUser.DisplayName;
 				user.firebase_token = firebaseUser.RefreshToken;
-				user.isAnnonymous 	= firebaseUser.IsAnonymous;
+				user.isAnonymous 	= firebaseUser.IsAnonymous;
 
 				createNewUser(user);
 
@@ -228,7 +228,7 @@ public class FirebaseHelper  {
 			user.email 			= firebaseUser.Email;
 			user.username 		= firebaseUser.DisplayName;
 			user.firebase_token = firebaseUser.RefreshToken;
-			user.isAnnonymous 	= firebaseUser.IsAnonymous;
+			user.isAnonymous 	= firebaseUser.IsAnonymous;
 
 			createNewUser(user);
 
@@ -246,13 +246,13 @@ public class FirebaseHelper  {
 				UserInfo newInfo = new UserInfo();
 
 				if (task.IsCanceled) {
-					Debug.LogError("LinkWithCredentialAsync was canceled.");
+					Debug.LogError("linkingAccount was canceled.");
 					newInfo.userID = task.Exception.ToString();
 					callbackWhenDone(newInfo);
 					return;
 				}
 				if (task.IsFaulted) {
-					Debug.LogError("LinkWithCredentialAsync encountered an error: " + task.Exception);
+					Debug.LogError("linkingAccount encountered an error: " + task.Exception);
 					newInfo.userID = task.Exception.ToString();
 					callbackWhenDone(newInfo);
 					return;
@@ -263,7 +263,7 @@ public class FirebaseHelper  {
 				}
 
 				firebaseUser = task.Result;
-				Debug.LogFormat("Credentials successfully linked to Firebase user: {0} ({1})",
+				Debug.LogFormat("linkingAccount successfully linked to Firebase user: {0} ({1})",
 					firebaseUser.DisplayName, firebaseUser.UserId);
 
 				//update user info
@@ -271,7 +271,7 @@ public class FirebaseHelper  {
 				newInfo.email 			= firebaseUser.Email;
 				newInfo.username 		= firebaseUser.DisplayName;
 				newInfo.firebase_token 	= firebaseUser.RefreshToken;
-				newInfo.isAnnonymous 	= firebaseUser.IsAnonymous;
+				newInfo.isAnonymous 	= firebaseUser.IsAnonymous;
 
 				updateUserInfo(newInfo);
 
@@ -324,9 +324,12 @@ public class FirebaseHelper  {
 						firebaseUser.DisplayName, firebaseUser.UserId);
 
 					newInfo.userID 			= firebaseUser.UserId;
+					newInfo.email 			= firebaseUser.Email;
 					newInfo.username 		= firebaseUser.DisplayName;
 					newInfo.firebase_token 	= firebaseUser.RefreshToken;
-					newInfo.isAnnonymous 	= firebaseUser.IsAnonymous;
+					newInfo.isAnonymous 	= firebaseUser.IsAnonymous;
+
+					updateUserInfo(newInfo);
 
 					//call back
 					callbackWhenDone(newInfo);
@@ -368,7 +371,7 @@ public class FirebaseHelper  {
 			userRes.userID 			= firebaseUser.UserId;
 			userRes.username 		= firebaseUser.DisplayName;
 			userRes.firebase_token 	= firebaseUser.RefreshToken;
-			userRes.isAnnonymous 	= firebaseUser.IsAnonymous;
+			userRes.isAnonymous 	= firebaseUser.IsAnonymous;
 
 			TemporarilyStatus.getInstance().userInfo = userRes;
 
@@ -388,25 +391,29 @@ public class FirebaseHelper  {
 	}
 
 	public void signOut() {
-
+		PlayerPrefsHelper.saveUserToken("");
 		auth.SignOut();
 	}
 
 	//create new user
 	public void createNewUser (UserInfo user) {
+		if (user.userID != null && user.userID.Length > 0) {
+			PlayerPrefsHelper.saveUserToken(user.firebase_token);
 
-		TemporarilyStatus.getInstance().userInfo = user;
+			TemporarilyStatus.getInstance().userInfo = user;
 
-		FirebaseDatabase.DefaultInstance
-			.GetReference(USERS)
-			.Child(user.userID)
-			.SetRawJsonValueAsync(JsonUtility.ToJson(user));
+			FirebaseDatabase.DefaultInstance
+				.GetReference(USERS)
+				.Child(user.userID)
+				.SetRawJsonValueAsync(JsonUtility.ToJson(user));
+		}
 	}
 
 	//update user
 	public void updateUserInfo (UserInfo user) {
 
 		if (user.userID != null && user.userID.Length > 0) {
+			PlayerPrefsHelper.saveUserToken(user.firebase_token);
 
 			TemporarilyStatus.getInstance().userInfo = user;
 
@@ -415,7 +422,7 @@ public class FirebaseHelper  {
 			userUpdate["username"] 			= user.username;
 			userUpdate["email"] 			= user.email;
 			userUpdate["firebase_token"] 	= user.firebase_token;
-			userUpdate["isAnonymous"] 		= user.isAnnonymous;
+			userUpdate["isAnonymous"] 		= user.isAnonymous;
 
 			FirebaseDatabase.DefaultInstance
 				.GetReference(USERS)
@@ -1347,14 +1354,14 @@ public class FirebaseHelper  {
 							Debug.Log("snapshot :: getUserSettings :: " + snapshot.Key);
 
 							if (snapshot.GetRawJsonValue() != null) {
-								Debug.Log("FirebaseHelper :: getUserSettings :: success");
+
 								TemporarilyStatus.getInstance().auto_play_sound 	= Int32.Parse(snapshot.Child(SETTINGS_AUTOPLAY_KEY).GetRawJsonValue().Trim('"'));
 								TemporarilyStatus.getInstance().my_level  			= Int32.Parse(snapshot.Child(SETTINGS_MY_LEVEL_KEY).GetRawJsonValue().Trim('"'));
 								TemporarilyStatus.getInstance().new_card_a_day 		= Int32.Parse(snapshot.Child(SETTINGS_NEW_CARD_KEY).GetRawJsonValue().Trim('"'));
 								TemporarilyStatus.getInstance().total_card_a_day 	= Int32.Parse(snapshot.Child(SETTINGS_TOTAL_CARD_KEY).GetRawJsonValue().Trim('"'));
 								TemporarilyStatus.getInstance().time_to_show_answer	= Int32.Parse(snapshot.Child(SETTINGS_TIME_SHOW_ANSWER_KEY).GetRawJsonValue().Trim('"'));
 								TemporarilyStatus.getInstance().notification	 	= Int32.Parse(snapshot.Child(SETTINGS_NOTIFICATION_KEY).GetRawJsonValue().Trim('"'));
-
+								Debug.Log("FirebaseHelper :: getUserSettings :: success");
 								callbackWhenDone(true);
 
 							} else {
