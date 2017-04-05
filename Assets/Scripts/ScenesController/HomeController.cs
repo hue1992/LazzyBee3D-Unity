@@ -107,20 +107,25 @@ public class HomeController : MonoBehaviour {
 	public void OnBtnStartClickHandle () {
 		SceneManager.LoadScene("Study", LoadSceneMode.Additive);
 	}
-<<<<<<< Updated upstream
+
 
 	private void _timerElapsed(object sender, ElapsedEventArgs e)
 	{
-		int curDate = DateTimeHelper.getCurrentDateTimeInSeconds();
+		//int curDate = DateTimeHelper.getCurrentDateTimeInSeconds();
 
-		if (curDate >= TemporarilyStatus.getInstance().timeLoadedData + CommonDefine.SECONDS_PERDAY) {
+		//if (curDate >= TemporarilyStatus.getInstance().timeLoadedData + CommonDefine.SECONDS_PERDAY) {
 			
-		}
+		//}
 	}
-=======
+
     public void OnBtnSettingClickHandle()
     {
         SceneManager.LoadScene("Setting", LoadSceneMode.Additive);
     }
->>>>>>> Stashed changes
+
+    public void OnProfileButtonClick()
+    {
+        SceneManager.LoadScene("Profile", LoadSceneMode.Additive);
+    }
+
 }
