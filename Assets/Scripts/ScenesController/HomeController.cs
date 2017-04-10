@@ -9,7 +9,9 @@ using Facebook.Unity;
 public class HomeController : MonoBehaviour
 {
     Timer timer = new Timer();
+
     public GameObject loadingIndicator;
+	public GameObject settingsPanel;
 
     private bool needToReloadData = false;  //need to reload data when new day was come
     [HideInInspector]
@@ -211,7 +213,7 @@ public class HomeController : MonoBehaviour
 
     public void OnBtnSettingClickHandle()
     {
-        SceneManager.LoadScene("Setting", LoadSceneMode.Additive);
+		settingsPanel.SetActive(true);
     }
 
     public void OnProfileButtonClick()
