@@ -32,10 +32,12 @@ public class FirebaseHelper  {
 	//settings key
 	private const string SETTINGS_MY_LEVEL_KEY 			= "my_level";
 	private const string SETTINGS_AUTOPLAY_KEY 			= "auto_play_sound";
+	private const string SETTINGS_DISPLAY_MEANING_KEY 	= "display_meaning";
 	private const string SETTINGS_NEW_CARD_KEY 			= "new_card_a_day";
 	private const string SETTINGS_TOTAL_CARD_KEY 		= "total_card_a_day";
 	private const string SETTINGS_TIME_SHOW_ANSWER_KEY 	= "time_to_show_answer";
 	private const string SETTINGS_NOTIFICATION_KEY 		= "notification";
+	private const string SETTINGS_SPEAKING_SPEED_KEY	= "speaking_speed";
 
 	private const string STREAKS_DAYS_KEY = "days";
 	private const string STREAKS_COUNT_KEY = "count";
@@ -1316,7 +1318,7 @@ public class FirebaseHelper  {
 					if (wordsList.Count < limit) {
 						TemporarilyStatus.getInstance().my_level++;
 						TemporarilyStatus.getInstance().picked_word_index = 0;
-						updateLevelSetting(TemporarilyStatus.getInstance().my_level);
+						updateSettingLevel(TemporarilyStatus.getInstance().my_level);
 					}
 
 					callbackWhenDone(wordsList.ToArray());
@@ -1354,13 +1356,16 @@ public class FirebaseHelper  {
 							Debug.Log("snapshot :: getUserSettings :: " + snapshot.Key);
 
 							if (snapshot.GetRawJsonValue() != null) {
-
+								
 								TemporarilyStatus.getInstance().auto_play_sound 	= Int32.Parse(snapshot.Child(SETTINGS_AUTOPLAY_KEY).GetRawJsonValue().Trim('"'));
+								TemporarilyStatus.getInstance().display_meaning 	= Int32.Parse(snapshot.Child(SETTINGS_DISPLAY_MEANING_KEY).GetRawJsonValue().Trim('"'));
 								TemporarilyStatus.getInstance().my_level  			= Int32.Parse(snapshot.Child(SETTINGS_MY_LEVEL_KEY).GetRawJsonValue().Trim('"'));
 								TemporarilyStatus.getInstance().new_card_a_day 		= Int32.Parse(snapshot.Child(SETTINGS_NEW_CARD_KEY).GetRawJsonValue().Trim('"'));
 								TemporarilyStatus.getInstance().total_card_a_day 	= Int32.Parse(snapshot.Child(SETTINGS_TOTAL_CARD_KEY).GetRawJsonValue().Trim('"'));
 								TemporarilyStatus.getInstance().time_to_show_answer	= Int32.Parse(snapshot.Child(SETTINGS_TIME_SHOW_ANSWER_KEY).GetRawJsonValue().Trim('"'));
 								TemporarilyStatus.getInstance().notification	 	= Int32.Parse(snapshot.Child(SETTINGS_NOTIFICATION_KEY).GetRawJsonValue().Trim('"'));
+								TemporarilyStatus.getInstance().speaking_speed	 	= float.Parse(snapshot.Child(SETTINGS_SPEAKING_SPEED_KEY).GetRawJsonValue().Trim('"'));
+
 								Debug.Log("FirebaseHelper :: getUserSettings :: success");
 								callbackWhenDone(true);
 
@@ -1387,24 +1392,56 @@ public class FirebaseHelper  {
 	public void configDefaultSettings() {
 		_updateUserSettings(SETTINGS_MY_LEVEL_KEY, CommonDefine.SETTINGS_DEFAULT_LEVEL);
 		_updateUserSettings(SETTINGS_AUTOPLAY_KEY, CommonDefine.SETTINGS_AUTO_PLAY);
+		_updateUserSettings(SETTINGS_DISPLAY_MEANING_KEY, CommonDefine.SETTINGS_DISPLAY_MEANING);
 		_updateUserSettings(SETTINGS_NEW_CARD_KEY, CommonDefine.SETTINGS_NEWCARD_A_DAY);
 		_updateUserSettings(SETTINGS_TOTAL_CARD_KEY, CommonDefine.SETTINGS_TOTALCARD_A_DAY);
 		_updateUserSettings(SETTINGS_TIME_SHOW_ANSWER_KEY, CommonDefine.SETTINGS_TIME_SHOW_ANSWER);
 		_updateUserSettings(SETTINGS_NOTIFICATION_KEY, CommonDefine.SETTINGS_NOTIFICATION);
+		_updateUserSettings(SETTINGS_SPEAKING_SPEED_KEY, CommonDefine.SETTINGS_SPEAKING_SPEED);
 
 		TemporarilyStatus.getInstance().auto_play_sound 	= CommonDefine.SETTINGS_AUTO_PLAY;
+		TemporarilyStatus.getInstance().display_meaning 	= CommonDefine.SETTINGS_DISPLAY_MEANING;
 		TemporarilyStatus.getInstance().my_level  			= CommonDefine.SETTINGS_DEFAULT_LEVEL;
 		TemporarilyStatus.getInstance().new_card_a_day 		= CommonDefine.SETTINGS_NEWCARD_A_DAY;
 		TemporarilyStatus.getInstance().total_card_a_day 	= CommonDefine.SETTINGS_TOTALCARD_A_DAY;
 		TemporarilyStatus.getInstance().time_to_show_answer	= CommonDefine.SETTINGS_TIME_SHOW_ANSWER;
 		TemporarilyStatus.getInstance().notification	 	= CommonDefine.SETTINGS_NOTIFICATION;
+		TemporarilyStatus.getInstance().speaking_speed	 	= CommonDefine.SETTINGS_SPEAKING_SPEED;
 	}
 
-	public void updateLevelSetting(int value) {
+	public void updateSettingLevel(int value) {
 		_updateUserSettings(SETTINGS_MY_LEVEL_KEY, value);
 	}
 
-	private void _updateUserSettings(string settingKey, int value) {
+	public void updateSettingAutoplaySound(int value) {
+		_updateUserSettings(SETTINGS_AUTOPLAY_KEY, value);
+	}
+
+	public void updateSettingDisplayMeaning(int value) {
+		_updateUserSettings(SETTINGS_DISPLAY_MEANING_KEY, value);
+	}
+
+	public void updateSettingWordPerDay(int value) {
+		_updateUserSettings(SETTINGS_NEW_CARD_KEY, value);
+	}
+
+	public void updateSettingTotalPerDay(int value) {
+		_updateUserSettings(SETTINGS_TOTAL_CARD_KEY, value);
+	}
+
+	public void updateSettingTimeShowAnswer(int value) {
+		_updateUserSettings(SETTINGS_TIME_SHOW_ANSWER_KEY, value);
+	}
+
+	public void updateSettingOnOffNotification(int value) {
+		_updateUserSettings(SETTINGS_NOTIFICATION_KEY, value);
+	}
+
+	public void updateSettingSpeakingSpeed(float value) {
+		_updateUserSettings(SETTINGS_SPEAKING_SPEED_KEY, value);
+	}
+
+	private void _updateUserSettings(string settingKey, object value) {
 		if (signedIn == true) {
 			Dictionary<string, object> newValue = new Dictionary<string, object> ();
 			newValue [settingKey] = value;

@@ -27,8 +27,10 @@ public class CommonDefine {
 	//default settings
 	public const int SETTINGS_DEFAULT_LEVEL 	= 1;
 	public const int SETTINGS_NEWCARD_A_DAY 	= 5;
-	public const int SETTINGS_TOTALCARD_A_DAY 	= 40;
+	public const int SETTINGS_TOTALCARD_A_DAY 	= 50;
 	public const int SETTINGS_TIME_SHOW_ANSWER 	= 3;
 	public const int SETTINGS_AUTO_PLAY 		= 1;
+	public const int SETTINGS_DISPLAY_MEANING	= 1;
 	public const int SETTINGS_NOTIFICATION	 	= 1;
+	public const float SETTINGS_SPEAKING_SPEED 	= 1.0f;
 }
