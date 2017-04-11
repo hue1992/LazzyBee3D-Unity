@@ -10,8 +10,9 @@ public class TemporarilyStatus {
 	public int new_card_a_day 		= CommonDefine.SETTINGS_NEWCARD_A_DAY;
 	public int total_card_a_day 	= CommonDefine.SETTINGS_TOTALCARD_A_DAY;
 	public int time_to_show_answer 	= CommonDefine.SETTINGS_TIME_SHOW_ANSWER;
-	public int auto_play_sound		= CommonDefine.SETTINGS_AUTO_PLAY;		//0 or 1
-	public int notification			= CommonDefine.SETTINGS_NOTIFICATION;	//0 or 1
+	public int auto_play_sound		= CommonDefine.SETTINGS_AUTO_PLAY;			//0 or 1
+	public int display_meaning		= CommonDefine.SETTINGS_DISPLAY_MEANING;	//0 or 1
+	public int notification			= CommonDefine.SETTINGS_NOTIFICATION;		//0 or 1
 
 	public float speaking_speed		= 1.0f;
 
