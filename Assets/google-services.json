@@ -1,39 +1,35 @@
 {
   "project_info": {
-    "project_number": "259738501317",
-    "firebase_url": "https://lazzybee3d-99751721.firebaseio.com",
-    "project_id": "lazzybee3d-99751721",
-    "storage_bucket": "lazzybee3d-99751721.appspot.com"
+    "project_number": "1090254847247",
+    "firebase_url": "https://lazeebee-977.firebaseio.com",
+    "project_id": "lazeebee-977",
+    "storage_bucket": "lazeebee-977.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:259738501317:android:3e8c337664183d59",
+        "mobilesdk_app_id": "1:1090254847247:android:ae6338538b186a0a",
         "android_client_info": {
-          "package_name": "com.born2go.lazzybee3d"
+          "package_name": "com.born2go.lazzybee"
         }
       },
       "oauth_client": [
         {
-          "client_id": "259738501317-ojgut2mfrna59b3ljguht70g5488v2kr.apps.googleusercontent.com",
+          "client_id": "1090254847247-1utk4uifa84393hqa24rr4djopngdc4g.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.born2go.lazzybee3d",
-            "certificate_hash": "85f67b97e5d0e8b616017ef516538c5a93f53779"
+            "package_name": "com.born2go.lazzybee",
+            "certificate_hash": "70f9005861082fe428979f1f756c54e3671a0ffe"
           }
         },
         {
-          "client_id": "259738501317-rhb6hddsj0j2oko9vekt5ebdiouf1pcb.apps.googleusercontent.com",
-          "client_type": 3
-        },
-        {
-          "client_id": "259738501317-nmf3lrm9c8hl5id1gdib32tb966oisdi.apps.googleusercontent.com",
+          "client_id": "1090254847247-hhq28qf96obdjm7c7pgr2qo2mt2o842l.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCnRiII2C2NKX-51qnoajSOYfG-TmSGeak"
+          "current_key": "AIzaSyBWoxTTRxYZv5iZC2uyHpChnCeXYEd1qKI"
         }
       ],
       "services": {
@@ -44,15 +40,15 @@
           "status": 2,
           "other_platform_oauth_client": [
             {
-              "client_id": "259738501317-5u546hj79pitac227as214q7p6g4eu2b.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.born2go.lazzybee3d"
-              }
+              "client_id": "1090254847247-hhq28qf96obdjm7c7pgr2qo2mt2o842l.apps.googleusercontent.com",
+              "client_type": 3
             },
             {
-              "client_id": "259738501317-rhb6hddsj0j2oko9vekt5ebdiouf1pcb.apps.googleusercontent.com",
-              "client_type": 3
+              "client_id": "1090254847247-0vi0qlh6g0b25r1qhjbv81mak8u5bqmc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.born2go.lazzybee"
+              }
             }
           ]
         },
