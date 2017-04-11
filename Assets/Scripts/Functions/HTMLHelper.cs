@@ -5,7 +5,8 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 
 public class HTMLHelper {
-	private static string SPEAKER_IMG_LINK = "https://firebasestorage.googleapis.com/v0/b/lazeebee-977.appspot.com/o/ic_speaker%403x.png?alt=media&token=2dd7f3ab-a695-4cca-a8b0-81ac6a8fdc96";
+//	private static string SPEAKER_IMG_LINK = "https://firebasestorage.googleapis.com/v0/b/lazeebee-977.appspot.com/o/ic_speaker%403x.png?alt=media&token=2dd7f3ab-a695-4cca-a8b0-81ac6a8fdc96";
+	private static string SPEAKER_IMG_LINK = "https://firebasestorage.googleapis.com/v0/b/lazeebee-977.appspot.com/o/speaker.png?alt=media&token=be4d8dc7-b5c0-4f3d-b5e2-893c30ec18ee";
 
 	public static string createHTMLForQuestion (WordInfo word) {
 		Debug.Log("createHTMLForQuestion");
@@ -56,12 +57,12 @@ public class HTMLHelper {
 
 		try {
 			float speed = TemporarilyStatus.getInstance().speaking_speed;
-			Debug.Log("createHTMLForQuestion 1");
+			Debug.Log("createHTMLForQuestion speed :: " +speed.ToString());
 			string strWordIconTag = @"<div style='float:left;width:90%%;text-align: center;'>" +
 	                        "<strong style='font-size:18pt;'> {0} </strong>\n" +   //%@ will be replaced by word.question
 				"</div>\n" +
 				"<div style='float:right;width:10%%'>\n" +
-				"<a onclick='playText(\"{1}\", {2});'><img width=100%% src='{3}'/><p>\n" +
+				"<a onclick='playText(\"{1}\", {2:0.0});'><img width=100%% src='{3}'/><p>\n" +
 				"</div>\n";
 
 			strWordIconTag = String.Format(strWordIconTag, word.word, word.word, speed, SPEAKER_IMG_LINK);
@@ -138,7 +139,7 @@ public class HTMLHelper {
 		//create html
 		try {
 			strWordIconTag = "<div style='float:right;width:10%%'>" +
-				"<a onclick='playText(\"{0}\", {1});'><img width=100%% src='{2}'/></a>\n" +
+				"<a onclick='playText(\"{0}\", {1:0.0});'><img width=100%% src='{2}'/></a>\n" +
 				"</div>\n";
 			strWordIconTag = String.Format(strWordIconTag, word.word, speed, SPEAKER_IMG_LINK);
 
@@ -147,7 +148,7 @@ public class HTMLHelper {
 					"   <em>{0}</em> \n" + //%@ will be replaced by strExplanation
 					"</div>\n" +
 					"<div style=\"float:right;width:10%%\">\n " +
-					"   <p><a onclick='playText(\"{1}\", {2});'><img width=100%% src='{3}'/></a></p>\n" +  //%@ will be replaced by strExplanation
+					"   <p><a onclick='playText(\"{1}\", {2:0.0});'><img width=100%% src='{3}'/></a></p>\n" +  //%@ will be replaced by strExplanation
 					"</div>\n";
 				strExplainIconTag = String.Format(strExplainIconTag, strExplanation, plainExplanation, speed, SPEAKER_IMG_LINK);
 			}
@@ -158,7 +159,7 @@ public class HTMLHelper {
 					"   <em>{0}</em> \n" + //%@ will be replaced by strExample
 					"</div>\n" +
 					"<div style=\"float:right;width:10%%\">\n " +
-					"   <p><a onclick='playText(\"{1}\", {2});'><img width=100%% src='{3}'/></a></p>\n" +  //%@ will be replaced by strExample
+					"   <p><a onclick='playText(\"{1}\", {2:0.0});'><img width=100%% src='{3}'/></a></p>\n" +  //%@ will be replaced by strExample
 					"</div>\n";
 				strExampleIconTag = String.Format(strExampleIconTag, strExample, plainExample, speed, SPEAKER_IMG_LINK);
 			}

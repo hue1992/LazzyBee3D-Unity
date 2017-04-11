@@ -107,16 +107,13 @@ public class SettingController : MonoBehaviour {
 
     public void OnCloseButtonClick() {
 		Debug.Log("OnCloseButtonClick");
-		gameObject.SetActive(false);
+//		GameObject tmp = GameObject.Find("Dropdown List");
+//		if (tmp != null) {
+//			Debug.Log("Destroy :: Dropdown List");
+//			Destroy(tmp);
+//		}
 
-		optionsLevels.onValueChanged.RemoveAllListeners();
-		slideWordPerDay.onValueChanged.RemoveAllListeners();
-		slideTotalPerDay.onValueChanged.RemoveAllListeners();
-		slideWaitingTime.onValueChanged.RemoveAllListeners();
-		slideSpeakingSpeed.onValueChanged.RemoveAllListeners();
-		toggleAutoPlay.onValueChanged.RemoveAllListeners();
-		toggleDisplayMeaing.onValueChanged.RemoveAllListeners();
-		toggleNotification.onValueChanged.RemoveAllListeners();
+		gameObject.SetActive(false);
     }
 
 	//drop down handler

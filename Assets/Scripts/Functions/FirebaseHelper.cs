@@ -1160,9 +1160,16 @@ public class FirebaseHelper  {
 						if (snapshot.GetRawJsonValue() != null) {
 
 							string picked_word_ind_key = "picked_word_index_lv" + TemporarilyStatus.getInstance().my_level;
-							TemporarilyStatus.getInstance().picked_word_index = Int32.Parse(snapshot.Child(picked_word_ind_key).GetRawJsonValue());
-							Debug.Log("_getCurrentLearningWordIndex :: succcessfull");
-							callbackWhenDone(true);
+
+							if (snapshot.Child(picked_word_ind_key).GetRawJsonValue() != null) {
+								TemporarilyStatus.getInstance().picked_word_index = Int32.Parse(snapshot.Child(picked_word_ind_key).GetRawJsonValue());
+								Debug.Log("_getCurrentLearningWordIndex :: succcessfull");
+								callbackWhenDone(true);
+
+							} else {
+								Debug.Log("_getCurrentLearningWordIndex :: failed");
+								callbackWhenDone(false);
+							}
 
 						} else {
 							Debug.Log("_getCurrentLearningWordIndex :: failed");
