@@ -16,6 +16,7 @@ public class StudyController : MonoBehaviour, IScenesController
         LIST_NEW
     };
     public GameObject loadingIndicator;
+	public GameObject webViewContainer;
 
     private List<string> newWords = new List<string>();
     private List<string> againWords = new List<string>();
@@ -42,6 +43,10 @@ public class StudyController : MonoBehaviour, IScenesController
 
     private string htmlText;
 
+	public const string STR_REVIEW	= "Review";
+	public const string STR_AGAIN	= "Again";
+	public const string STR_NEW		= "New";
+
     void Start()
     {
         handlerButton();
@@ -53,22 +58,22 @@ public class StudyController : MonoBehaviour, IScenesController
         //update title screen
         if (curListName == CURRENT_LIST_NAME.LIST_REVIEW)
         {
-            titleText.text = "Review";
+			titleText.text = STR_REVIEW;
 
         }
         else if (curListName == CURRENT_LIST_NAME.LIST_AGAIN)
         {
-            titleText.text = "Again";
+			titleText.text = STR_AGAIN;
 
         }
         else if (curListName == CURRENT_LIST_NAME.LIST_NEW)
         {
-            titleText.text = "New word";
+			titleText.text = STR_NEW;
         }
 
-        newText.text = newWords.Count.ToString();
-        againText.text = (againWords.Count + subAgainWords.Count).ToString();
-        reviewText.text = reviewWords.Count.ToString();
+		newText.text 	= STR_REVIEW + "\n" + newWords.Count.ToString();
+		againText.text 	= STR_AGAIN + "\n" + (againWords.Count + subAgainWords.Count).ToString();
+		reviewText.text = STR_NEW + "\n" + reviewWords.Count.ToString();
     }
 
 
@@ -103,6 +108,7 @@ public class StudyController : MonoBehaviour, IScenesController
 
         endSessionStudy();
     }
+
     void HardClick()
     {
         //update word with hard option
@@ -113,6 +119,7 @@ public class StudyController : MonoBehaviour, IScenesController
 
         endSessionStudy();
     }
+
     void NormalClick()
     {
         //update word with normal option
@@ -123,6 +130,7 @@ public class StudyController : MonoBehaviour, IScenesController
 
         endSessionStudy();
     }
+
     void EasyClick()
     {
         //update word with easy option
@@ -165,7 +173,7 @@ public class StudyController : MonoBehaviour, IScenesController
             }
             else
             {
-                //				currentWordInd++;	//always get item at 0 because we remove words after learn them
+                //currentWordInd++;	//always get item at 0 because we remove words after learn them
                 currentWord = reviewWords.ElementAt(currentWordInd);
             }
 
@@ -401,30 +409,18 @@ public class StudyController : MonoBehaviour, IScenesController
         htmlText = HTMLHelper.createHTMLForAnswer(wordUserLearning.wordInfo);
 
         Debug.Log("loadAnswer :: htmlText :: " + htmlText);
+		setTextFor4Buttons();
         LoadFromText();
     }
 
     UniWebView CreateWebView()
     {
-        var webViewGameObject = GameObject.Find("WebView");
         UniWebView webView = null;
+		webView = webViewContainer.GetComponent<UniWebView>();
 
-        if (webViewGameObject == null)
+        if (webView == null)
         {
-            webViewGameObject = new GameObject("WebView");
-
-            webView = webViewGameObject.AddComponent<UniWebView>();
-
-        }
-        else
-        {
-            webViewGameObject.SetActive(true);
-            webView = webViewGameObject.GetComponent<UniWebView>();
-
-            if (webView == null)
-            {
-                webView = webViewGameObject.AddComponent<UniWebView>();
-            }
+			webView = webViewContainer.AddComponent<UniWebView>();
         }
 
         webView.toolBarShow = false;
@@ -440,7 +436,7 @@ public class StudyController : MonoBehaviour, IScenesController
         webView.backButtonEnable = false;
         webView.insets.top = 100;
         webView.insets.bottom = 70;
-        webView.SetBackgroundColor(new Color(1, 1, 1, 0));
+        webView.SetBackgroundColor(new Color(255, 255, 255, 0));
         webView.Show();
     }
 
@@ -469,17 +465,16 @@ public class StudyController : MonoBehaviour, IScenesController
             }
         }
 
+		//dont knwon why webview still display after unload scene
+		UniWebView webView = null;
+		webView = webViewContainer.GetComponent<UniWebView>();
+		if (webView != null)
+		{
+			Debug.Log("Study Controller :: Destroy webView");
+			Destroy(webView.gameObject);
+		}
+
         SceneManager.UnloadSceneAsync("Study");
-        //dont knwon why webview still display after unload scene
-        //		GameObject webViewGameObject = GameObject.Find("WebView");
-        //
-        //		if (webViewGameObject != null) {
-        //			UniWebView webView = webViewGameObject.GetComponent<UniWebView>();
-        //
-        //			if (webView != null) {
-        //				webView.gameObject.SetActive(false);
-        //			}
-        //		}
     }
 
 
@@ -488,7 +483,7 @@ public class StudyController : MonoBehaviour, IScenesController
     }
 
     void OnDestroy() {
-        Debug.Log("Study Controller :: OnDestroy");
+		Debug.Log("Study Controller :: OnDestroy");
     }
 
     private void showHideLoadingIndicator(bool show) {
@@ -496,5 +491,18 @@ public class StudyController : MonoBehaviour, IScenesController
             loadingIndicator.SetActive(show);
         }
     }
+
+	private void setTextFor4Buttons () {
+		string[] titles = Algorithm.getInstance().nextIntervalStringsList(wordUserLearning.wordProgress);
+		Debug.Log("setTextFor4Buttons :: Again :: " + titles[0]);
+		Debug.Log("setTextFor4Buttons :: Hard :: " + titles[1]);
+		Debug.Log("setTextFor4Buttons :: Good :: " + titles[2]);
+		Debug.Log("setTextFor4Buttons :: Easy :: " + titles[3]);
+
+		btnAgain.GetComponentInChildren<Text>().text 	= String.Format("{0}\n{1}", "Again", titles[0]);
+		btnHard.GetComponentInChildren<Text>().text 	= String.Format("{0}\n{1}", "Hard", titles[1]);
+		btnNormal.GetComponentInChildren<Text>().text	= String.Format("{0}\n{1}", "Good", titles[2]);
+		btnEasy.GetComponentInChildren<Text>().text 	= String.Format("{0}\n{1}", "Easy", titles[3]);
+	}
 
 }
