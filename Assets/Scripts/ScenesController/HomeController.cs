@@ -12,13 +12,15 @@ public class HomeController : MonoBehaviour
 
     public GameObject loadingIndicator;
 	public GameObject settingsPanel;
+	public GameObject dialogMsg;
+	private DialogMessageController dialogMessageController;
 
     private bool needToReloadData = false;  //need to reload data when new day was come
     [HideInInspector]
     public bool isShowingStudyScene = false;    //must be public to access it from study scene
 
-    //load when a new day was come or add more word to learn
-    public void loadNewData()
+    //load when a new day was come
+	private void _loadNewData()
     {
         needToReloadData = false;
 
@@ -27,6 +29,32 @@ public class HomeController : MonoBehaviour
         showHideLoadingIndicator(true);
         _loadTodayData();
     }
+
+	//add more word to learn
+	public void loadMoreData()
+	{
+		//do not need to update the loaded data date
+		showHideLoadingIndicator(true);
+		FirebaseHelper.getInstance().checkStreakToday(isCompletedTarget => {
+			if (isCompletedTarget == true) {
+				FirebaseHelper.getInstance().prepareListNewWordsToLearn(TemporarilyStatus.getInstance().new_card_a_day,
+					newRes =>
+					{
+						showHideLoadingIndicator(false);
+						Debug.Log("New count :: " + newRes);
+						if (newRes > 0) {
+							OnBtnStartClickHandle();
+
+						} else {
+							//show alert: no words to learn
+						}
+					});
+				
+			} else {
+				//show alert: you have to comleted daily target...
+			}
+		});
+	}
 
     private void _loadTodayData()
     {
@@ -101,6 +129,7 @@ public class HomeController : MonoBehaviour
         //
         //		} else {
         Debug.Log("Logged in already");
+
         //load today learning data
         //get datetime in /newwords field, check if it is obsolete, prepare new list
         //date in /newwords is always equal to /inreview
@@ -144,7 +173,6 @@ public class HomeController : MonoBehaviour
         timer.Enabled = true;
         timer.Elapsed += new ElapsedEventHandler(_timerElapsed);
         timer.Start();
-        //		}
     }
 
     public void OnBtnStartClickHandle()
@@ -168,7 +196,7 @@ public class HomeController : MonoBehaviour
             //if user come back home scene when they do not finish target, _timerElapsed is still called and reload data.
             if (isShowingStudyScene == false)
             {
-                loadNewData();
+				_loadNewData();
             }
         }
     }
@@ -220,5 +248,12 @@ public class HomeController : MonoBehaviour
     {
         SceneManager.LoadScene("Profile", LoadSceneMode.Additive);
     }
+
+	//dialog message
+	private void showDialog (string message) {
+//		DIALOG_TYPE 
+//		dialogMessageController = dialogMsg.GetComponentInChildren<DialogMessageController>();
+//		dialogMessageController.OnButtonOkClickDelegate = OnButtonOkClickDelegate;
+	}
 
 }

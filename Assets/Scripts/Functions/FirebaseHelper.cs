@@ -41,6 +41,7 @@ public class FirebaseHelper  {
 
 	private const string STREAKS_DAYS_KEY = "days";
 	private const string STREAKS_COUNT_KEY = "count";
+	private const string STREAKS_COMPLETED_TODAY_KEY = "is_completed_today";
 
     private static FirebaseHelper _instance = null;
 	private static Firebase.Auth.FirebaseAuth auth = null;
@@ -1486,8 +1487,9 @@ public class FirebaseHelper  {
 						if (snapshot.GetRawJsonValue() != null) {
 							string jsonString = snapshot.Child(STREAKS_DAYS_KEY).GetRawJsonValue().Trim('"');
 								
-							TemporarilyStatus.getInstance().days 		= jsonString.TrimStart('{').TrimEnd('}').Split(',');
-							TemporarilyStatus.getInstance().streaks 	= Int32.Parse(snapshot.Child(STREAKS_COUNT_KEY).GetRawJsonValue().Trim('"'));
+							TemporarilyStatus.getInstance().days 				= jsonString.TrimStart('{').TrimEnd('}').Split(',');
+							TemporarilyStatus.getInstance().streaks 			= Int32.Parse(snapshot.Child(STREAKS_COUNT_KEY).GetRawJsonValue().Trim('"'));
+							TemporarilyStatus.getInstance().isCompletedToday 	= Boolean.Parse(snapshot.Child(STREAKS_COUNT_KEY).GetRawJsonValue().Trim('"'));
 
 							Debug.Log("FirebaseHelper :: getUserStreaks :: success");
 							callbackWhenDone(true);
@@ -1513,8 +1515,9 @@ public class FirebaseHelper  {
 	public void updateUserStreaks() {
 		if (signedIn == true) {
 			Dictionary<string, object> newValue = new Dictionary<string, object> ();
-			newValue [STREAKS_DAYS_KEY] 	= TemporarilyStatus.getInstance().convertDayStreakToString();
-			newValue [STREAKS_COUNT_KEY]	= TemporarilyStatus.getInstance().streaks;
+			newValue [STREAKS_DAYS_KEY] 			= TemporarilyStatus.getInstance().convertDayStreakToString();
+			newValue [STREAKS_COUNT_KEY]			= TemporarilyStatus.getInstance().streaks;
+			newValue [STREAKS_COMPLETED_TODAY_KEY]	= TemporarilyStatus.getInstance().isCompletedToday;
 
 			FirebaseDatabase.DefaultInstance
 				.GetReference (STREAKS)
@@ -1542,19 +1545,64 @@ public class FirebaseHelper  {
 
 					TemporarilyStatus.getInstance().addDayToStreak(curDate.ToString());
 					TemporarilyStatus.getInstance().streaks = TemporarilyStatus.getInstance().streaks + 1;
+					TemporarilyStatus.getInstance().isCompletedToday = true;
 
 					updateUserStreaks();
 					callbackWhenDone(true);
 
 				} else {
 					Debug.Log("checkStreakAfterLearningFinishWithDate :: clear streak");
-					TemporarilyStatus.getInstance().addDayToStreak(curDate.ToString());
 					TemporarilyStatus.getInstance().streaks = 0;
+					TemporarilyStatus.getInstance().isCompletedToday = false;
 
 					updateUserStreaks();
 					callbackWhenDone(false);
 				}
 			});
+		} else {
+			Debug.Log("No user is signed in");
+			callbackWhenDone(false);
+		}
+	}
+
+	//true: is completed daily target
+	public void checkStreakToday (System.Action<bool> callbackWhenDone) {
+		Debug.Log("checkStreakToday");
+
+		if (signedIn == true) {
+			FirebaseDatabase.DefaultInstance
+				.GetReference(STREAKS)
+				.Child(firebaseUser.UserId)
+				.GetValueAsync().ContinueWith(task => {
+					if (task.IsFaulted) {
+						// Handle the error...
+						Debug.Log("checkStreakToday :: task :: error" + task.ToString());
+						callbackWhenDone(false);
+
+					} else if (task.IsCompleted) {
+
+						DataSnapshot snapshot = task.Result;
+						Debug.Log("snapshot :: checkStreakToday :: " + snapshot.Key);
+
+						if (snapshot.GetRawJsonValue() != null) {
+							TemporarilyStatus.getInstance().isCompletedToday 	= Boolean.Parse(snapshot.Child(STREAKS_COUNT_KEY).GetRawJsonValue().Trim('"'));
+
+							Debug.Log("FirebaseHelper :: checkStreakToday :: success");
+							callbackWhenDone(TemporarilyStatus.getInstance().isCompletedToday);
+
+						} else {
+							Debug.Log("FirebaseHelper :: checkStreakToday :: no data");
+							callbackWhenDone(false);
+						}
+
+
+
+					} else {
+						Debug.Log("FirebaseHelper :: checkStreakToday :: error");
+						callbackWhenDone(false);
+					}
+				});
+			
 		} else {
 			Debug.Log("No user is signed in");
 			callbackWhenDone(false);

@@ -20,6 +20,7 @@ public class TemporarilyStatus {
 
 	public string[] days 			= null;
 	public int streaks 				= 0;
+	public bool isCompletedToday	= false;
 
 	//time that data was loaded
 	public int timeLoadedData		= 0;
