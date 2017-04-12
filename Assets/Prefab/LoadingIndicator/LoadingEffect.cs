@@ -20,7 +20,7 @@ public class LoadingEffect : MonoBehaviour
 
     void  OnGUI()
     {
-        size = Screen.height / 6;
+        size = Screen.height / 10;
         if (loading)
         {
                Vector2 pivot   = new Vector2(Screen.width / 2, Screen.height / 2);

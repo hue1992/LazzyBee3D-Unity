@@ -13,6 +13,12 @@ public class LoginController : MonoBehaviour {
 	void Start () {
 //		OnLogOutButtonClick();
 		_checkCurrentUser();
+
+//		FirebaseHelper.getInstance().signOut();
+//
+//		if (FB.IsLoggedIn) {
+//			FB.LogOut();
+//		}
 	}
 	
 	void Awake () {
