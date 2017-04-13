@@ -24,6 +24,8 @@ public class DialogMessageController : MonoBehaviour {
 	public System.Action OnButtonTwoClickDelegate;
 
 	public DIALOG_TYPE _dialogType;
+	public int diglogTag;
+
     // Use this for initialization
     void Start () {
 		
@@ -34,11 +36,11 @@ public class DialogMessageController : MonoBehaviour {
 
 		if (_dialogType == DIALOG_TYPE.DIALOG_TYPE_ONEBUTTON) {
 			oneBtnPanel.SetActive(true);
-			oneBtnPanel.SetActive(false);
+			twoBtnPanel.SetActive(false);
 
 		} else {
 			oneBtnPanel.SetActive(false);
-			oneBtnPanel.SetActive(true);
+			twoBtnPanel.SetActive(true);
 		}
 	}
 
@@ -65,6 +67,10 @@ public class DialogMessageController : MonoBehaviour {
     public void setMessage(string text) {
         txtMessage.text = text;
     }
+
+	public void setDiglogTag(int t) {
+		diglogTag = t;
+	}
 
     public void onButtonOkClickHandle() {
 		OnButtonOkClickDelegate();
