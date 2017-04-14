@@ -27,11 +27,11 @@ public class HomeController : MonoBehaviour
 
     private bool needToReloadData = false;  //need to reload data when new day was come
 
-	private const string STR_NO_CONNECTION_ALERT_CONTENT	= "No internet connection\nPlease double check wifi/3G connection.";
+	private const string STR_NO_CONNECTION_ALERT_CONTENT	= "No internet connection!\nPlease double check wifi/3G connection.";
 	private const string STR_NOT_COMPLETED_DAILY_TARGET		= "You have not completed daily target. Complete it before adding more words.";
 	private const string STR_CONGRATULATION					= "Congratulation!\nNow is the time to relax.";
 	private const string STR_NOMORE_WORD_TO_LEARN			= "You had finished daily target. Click \"More words\" if you really want to learn more.";
-	private const string STR_STILL_HAVE_MORE_WORDS			= "You still have a few more words need to review today.";
+	private const string STR_STILL_HAVE_MORE_WORDS			= "You still have a few more words need to review today. Learn now?";
 
     [HideInInspector]
     public bool isShowingStudyScene = false;    //must be public to access it from study scene
@@ -48,7 +48,7 @@ public class HomeController : MonoBehaviour
 
 	private void _loadRemainWordsToReview() {
 		showHideLoadingIndicator(true);
-		FirebaseHelper.getInstance().prepareAgainList(1000,	//no limit
+		FirebaseHelper.getInstance().prepareInreviewList(1000,	//no limit
 			againRes =>
 			{
 				showHideLoadingIndicator(false);
@@ -58,8 +58,7 @@ public class HomeController : MonoBehaviour
 					showDialogStillHaveMoreWordToLearn();
 
 				} else {
-					//show alert: no words to learn
-					showDialogNoWordToLearn();
+					//do nothing
 				}
 			});
 	}
@@ -102,6 +101,8 @@ public class HomeController : MonoBehaviour
         int againCount = 0;
         try
         {
+			FirebaseHelper.getInstance().resetCompletedTodayFlag();
+
             FirebaseHelper.getInstance().prepareInreviewList(TemporarilyStatus.getInstance().total_card_a_day,
                 reviewRes =>
                 {
@@ -317,6 +318,7 @@ public class HomeController : MonoBehaviour
 				showHideLoadingIndicator(false);
 
 				if (isCompletedTarget == true) {
+					//show streak scene
 					showDialogCongratulation(); //for test
 
 				} else {
@@ -407,6 +409,9 @@ public class HomeController : MonoBehaviour
 		dialogMessageController.OnButtonTwoClickDelegate = OnButtonTwoClickDelegate;
 
 		dialogMessageController.setMessage(message);
+		dialogMessageController.setButtonOneText(btnOne);
+		dialogMessageController.setButtonTwoText(btnTwo);
+
 		dialogMessageController.Show();
 	}
 
@@ -421,6 +426,13 @@ public class HomeController : MonoBehaviour
 	private void OnButtonOkClickDelegate () {
 		Debug.Log("OnButtonOkClickDelegate");
 		hideDialog();
+
+		DIALOG_TAG_NAME tag = getDialogTag();
+		if (tag == DIALOG_TAG_NAME.TAG_CONGRATULATION) {
+			//if still have words to review, show alert to inform
+			//else do nothing, just close
+
+		}
 	}
 
 	private void OnButtonOneClickDelegate () {
@@ -437,7 +449,7 @@ public class HomeController : MonoBehaviour
 			OnBtnStartClickHandle();
 
 		} else if (tag == DIALOG_TAG_NAME.TAG_STILL_HAVE_MORE_WORDS) {
-			//prepare more word to review
+			OnBtnStartClickHandle();
 		}
 	}
 

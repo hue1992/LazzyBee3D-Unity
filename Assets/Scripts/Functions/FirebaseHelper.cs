@@ -1529,6 +1529,21 @@ public class FirebaseHelper  {
 		}
 	}
 
+	public void resetCompletedTodayFlag () {
+		if (signedIn == true) {
+			Dictionary<string, object> newValue = new Dictionary<string, object> ();
+			newValue [STREAKS_COMPLETED_TODAY_KEY]	= false;
+
+			FirebaseDatabase.DefaultInstance
+				.GetReference (STREAKS)
+				.Child (firebaseUser.UserId)
+				.UpdateChildrenAsync (newValue);
+
+		} else {
+			Debug.Log("No user is signed in");
+		}
+	}
+
 	//true: count streak | false: clear streak
 	public void checkStreakAfterLearningFinished (System.Action<bool> callbackWhenDone) {
 		Debug.Log("checkStreakAfterLearningFinishWithDate");
@@ -1585,7 +1600,7 @@ public class FirebaseHelper  {
 						Debug.Log("snapshot :: checkStreakToday :: " + snapshot.Key);
 
 						if (snapshot.GetRawJsonValue() != null) {
-							TemporarilyStatus.getInstance().isCompletedToday 	= Boolean.Parse(snapshot.Child(STREAKS_COUNT_KEY).GetRawJsonValue().Trim('"'));
+							TemporarilyStatus.getInstance().isCompletedToday 	= Boolean.Parse(snapshot.Child(STREAKS_COMPLETED_TODAY_KEY).GetRawJsonValue().Trim('"'));
 
 							Debug.Log("FirebaseHelper :: checkStreakToday :: success");
 							callbackWhenDone(TemporarilyStatus.getInstance().isCompletedToday);

@@ -52,7 +52,7 @@ public class StudyController : MonoBehaviour, IScenesController
 	private const string STR_AGAIN	= "Again";
 	private const string STR_NEW	= "New";
 
-	private const string STR_NO_CONNECTION_ALERT_CONTENT	= "No internet connection\nPlease double check wifi/3G connection.";
+	private const string STR_NO_CONNECTION_ALERT_CONTENT	= "No internet connection!\nPlease double check wifi/3G connection.";
 
 	Timer timer = new Timer();
 
@@ -472,6 +472,11 @@ public class StudyController : MonoBehaviour, IScenesController
 
         webView.toolBarShow = false;
         webView.SetShowSpinnerWhenLoading(false);
+		webView.backButtonEnable = false;
+		webView.insets.top = 100;
+		webView.insets.bottom = 70;
+		webView.SetBackgroundColor(Color.clear);
+
         return webView;
     }
 
@@ -480,10 +485,6 @@ public class StudyController : MonoBehaviour, IScenesController
         UniWebView webView = CreateWebView();
 
         webView.LoadHTMLString(htmlText, null);
-        webView.backButtonEnable = false;
-        webView.insets.top = 100;
-        webView.insets.bottom = 70;
-        webView.SetBackgroundColor(new Color(255, 255, 255, 0));
         webView.Show();
     }
 
