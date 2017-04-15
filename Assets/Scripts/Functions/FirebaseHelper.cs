@@ -1549,31 +1549,37 @@ public class FirebaseHelper  {
 		Debug.Log("checkStreakAfterLearningFinishWithDate");
 
 		if (signedIn == true) {
-			getCurrentDatetimeInNewWordsField(date => {
-				Debug.Log("checkStreakAfterLearningFinishWithDate :: date :: " + date.ToString());
+			checkStreakToday(isComletedToday => {
+				//only update streak when user had not completed target
+				if (isComletedToday == false) {
+					getCurrentDatetimeInNewWordsField(date => {
+						Debug.Log("checkStreakAfterLearningFinishWithDate :: date :: " + date.ToString());
 
-				int curDate = DateTimeHelper.getBeginOfDayInSec();
-				Debug.Log("checkStreakAfterLearningFinishWithDate :: curDate :: " + curDate.ToString());
+						int curDate = DateTimeHelper.getBeginOfDayInSec();
+						Debug.Log("checkStreakAfterLearningFinishWithDate :: curDate :: " + curDate.ToString());
 
-				if (date == curDate) {
-					Debug.Log("checkStreakAfterLearningFinishWithDate :: record streak");
+						if (date == curDate) {
+							Debug.Log("checkStreakAfterLearningFinishWithDate :: record streak");
 
-					TemporarilyStatus.getInstance().addDayToStreak(curDate.ToString());
-					TemporarilyStatus.getInstance().streaks = TemporarilyStatus.getInstance().streaks + 1;
-					TemporarilyStatus.getInstance().isCompletedToday = true;
+							TemporarilyStatus.getInstance().addDayToStreak(curDate.ToString());
+							TemporarilyStatus.getInstance().streaks = TemporarilyStatus.getInstance().streaks + 1;
+							TemporarilyStatus.getInstance().isCompletedToday = true;
 
-					updateUserStreaks();
-					callbackWhenDone(true);
+							updateUserStreaks();
+							callbackWhenDone(true);
 
-				} else {
-					Debug.Log("checkStreakAfterLearningFinishWithDate :: clear streak");
-					TemporarilyStatus.getInstance().streaks = 0;
-					TemporarilyStatus.getInstance().isCompletedToday = false;
+						} else {
+							Debug.Log("checkStreakAfterLearningFinishWithDate :: clear streak");
+							TemporarilyStatus.getInstance().streaks = 0;
+							TemporarilyStatus.getInstance().isCompletedToday = false;
 
-					updateUserStreaks();
-					callbackWhenDone(false);
+							updateUserStreaks();
+							callbackWhenDone(false);
+						}
+					});
 				}
 			});
+
 		} else {
 			Debug.Log("No user is signed in");
 			callbackWhenDone(false);
