@@ -86,9 +86,9 @@ public class StudyController : MonoBehaviour, IScenesController
 			titleText.text = STR_NEW;
         }
 
-		newText.text 	= STR_REVIEW + "\n" + newWords.Count.ToString();
+		newText.text 	= STR_NEW + "\n" + newWords.Count.ToString();
 		againText.text 	= STR_AGAIN + "\n" + (againWords.Count + subAgainWords.Count).ToString();
-		reviewText.text = STR_NEW + "\n" + reviewWords.Count.ToString();
+		reviewText.text = STR_REVIEW + "\n" + reviewWords.Count.ToString();
     }
 
 
@@ -279,7 +279,7 @@ public class StudyController : MonoBehaviour, IScenesController
 								Debug.Log("Study Controller :: ScriptHolder found");
 								HomeController homeController = gObj.GetComponent<HomeController>();
 
-								homeController.completedDailyTargetHandle();
+									homeController.completedDailyTargetHandle(isStreak);
 							}
 						}
 
@@ -372,6 +372,17 @@ public class StudyController : MonoBehaviour, IScenesController
                         {
                             showHideLoadingIndicator(false);
                             //show alert: no word to learn
+							Scene home = SceneManager.GetSceneByName("Home");
+							GameObject[] gameObjs = home.GetRootGameObjects();
+
+							foreach (GameObject gObj in gameObjs) {
+								if (gObj.name.Equals("ScriptHolder") == true) {
+									Debug.Log("Study Controller :: ScriptHolder found");
+									HomeController homeController = gObj.GetComponent<HomeController>();
+
+									homeController.showDialogNowordToLearnFromStudyScene();
+								}
+							}
 
                             //close screen
                             Debug.Log("UnloadSceneAsync(\"Study\")");

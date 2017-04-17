@@ -143,31 +143,7 @@ public class HomeController : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        //check login status again
-        //if it is logged out due to some unknown reason 
-        //it could take time to complete this progress => show loading indicator
-        //		Debug.Log("checkLoginStatus");
-        //		if (FirebaseHelper.getInstance().checkLoginStatus() == false) {
-        //			Debug.Log("Not logged in");
-        //			//show login screen
-        //			SceneManager.LoadScene("Login", LoadSceneMode.Single);
-        //
-        //			//for testing => login facebook is default
-        //			/*
-        //			if (!FB.IsInitialized) {
-        //				// Initialize the Facebook SDK
-        //				FB.Init(InitCallback, OnHideUnity);
-        //
-        //			} else {
-        //				// Already initialized, signal an app activation App Event
-        //				Debug.Log("Already initialized, signal an app activation App Event");
-        //				FB.ActivateApp();
-        //			}
-        //			*/
-        //
-        //		} else {
         Debug.Log("Logged in already");
-
         //load today learning data
         //get datetime in /newwords field, check if it is obsolete, prepare new list
         //date in /newwords is always equal to /inreview
@@ -304,28 +280,28 @@ public class HomeController : MonoBehaviour
         SceneManager.LoadScene("Profile", LoadSceneMode.Additive);
     }
 
-	public void completedDailyTargetHandle () {
-		//show streak scene
-		//after show streak scene call _loadRemainWordsToReview()
+	//isStreakCount: false => not streak, finish target lately, or learn more
+	public void completedDailyTargetHandle (bool isStreakCount) {
+
 		if (needToReloadData == true) {	//if it is a new day, just load new data
 			_loadNewData();
 
 		} else {
 			//else: show streak scene if it is completed target session
-			//or if it is "learn more" session, show alert congrat
-			showHideLoadingIndicator(true);
-			FirebaseHelper.getInstance().checkStreakToday(isCompletedTarget => {
-				showHideLoadingIndicator(false);
+			//after show streak scene call _loadRemainWordsToReview()
+			//or if it is "learn more" session, show alert congrat (always reload new data if it is a new day, so dont care case of "finish target lately")
+			if (isStreakCount == true) {
+				//show streak scene
+				showDialogCongratulation(); //for test
 
-				if (isCompletedTarget == true) {
-					//show streak scene
-					showDialogCongratulation(); //for test
-
-				} else {
-					showDialogCongratulation();
-				}
-			});
+			} else {
+				showDialogCongratulation();
+			}
 		}
+	}
+
+	public void showDialogNowordToLearnFromStudyScene () {
+		showDialogNoWordToLearn();
 	}
 
 	/************ Dialog message ************/
@@ -431,6 +407,7 @@ public class HomeController : MonoBehaviour
 		if (tag == DIALOG_TAG_NAME.TAG_CONGRATULATION) {
 			//if still have words to review, show alert to inform
 			//else do nothing, just close
+			_loadRemainWordsToReview();
 
 		}
 	}

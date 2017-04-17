@@ -917,7 +917,7 @@ public class FirebaseHelper  {
 	//callbackWhenDone -> return number of words
 	//after open learning screen, get inreview list from "learning_progress/inreview"
 	public void prepareInreviewList(int limit, System.Action<int> callbackWhenDone) {
-		Debug.Log("FirebaseHelper :: prepareInreviewList");
+		Debug.Log("FirebaseHelper :: prepareInreviewList :: limit :: " +limit.ToString());
 		if (limit > 20) {	//due to limited quota
 			limit = 20;
 		}
@@ -1169,6 +1169,7 @@ public class FirebaseHelper  {
 
 							} else {
 								Debug.Log("_getCurrentLearningWordIndex :: failed");
+								TemporarilyStatus.getInstance().picked_word_index = 0;
 								callbackWhenDone(false);
 							}
 
@@ -1544,36 +1545,45 @@ public class FirebaseHelper  {
 		}
 	}
 
+	//check and update streak
 	//true: count streak | false: clear streak
 	public void checkStreakAfterLearningFinished (System.Action<bool> callbackWhenDone) {
-		Debug.Log("checkStreakAfterLearningFinishWithDate");
+		Debug.Log("checkStreakAfterLearningFinished");
 
 		if (signedIn == true) {
-			getCurrentDatetimeInNewWordsField(date => {
-				Debug.Log("checkStreakAfterLearningFinishWithDate :: date :: " + date.ToString());
+			checkStreakToday(isComletedToday => {
+				//only update streak when user had not completed target yet
+				if (isComletedToday == false) {
+					getCurrentDatetimeInNewWordsField(date => {
+						Debug.Log("checkStreakAfterLearningFinished :: date :: " + date.ToString());
 
-				int curDate = DateTimeHelper.getBeginOfDayInSec();
-				Debug.Log("checkStreakAfterLearningFinishWithDate :: curDate :: " + curDate.ToString());
+						int curDate = DateTimeHelper.getBeginOfDayInSec();
+						Debug.Log("checkStreakAfterLearningFinished :: curDate :: " + curDate.ToString());
 
-				if (date == curDate) {
-					Debug.Log("checkStreakAfterLearningFinishWithDate :: record streak");
+						if (date == curDate) {
+							Debug.Log("checkStreakAfterLearningFinished :: record streak");
 
-					TemporarilyStatus.getInstance().addDayToStreak(curDate.ToString());
-					TemporarilyStatus.getInstance().streaks = TemporarilyStatus.getInstance().streaks + 1;
-					TemporarilyStatus.getInstance().isCompletedToday = true;
+							TemporarilyStatus.getInstance().addDayToStreak(curDate.ToString());
+							TemporarilyStatus.getInstance().streaks = TemporarilyStatus.getInstance().streaks + 1;
+							TemporarilyStatus.getInstance().isCompletedToday = true;
 
-					updateUserStreaks();
-					callbackWhenDone(true);
+							updateUserStreaks();
+							callbackWhenDone(true);
 
+						} else {
+							Debug.Log("checkStreakAfterLearningFinished :: clear streak");
+							TemporarilyStatus.getInstance().streaks = 0;
+							TemporarilyStatus.getInstance().isCompletedToday = false;
+
+							updateUserStreaks();
+							callbackWhenDone(false);
+						}
+					});
 				} else {
-					Debug.Log("checkStreakAfterLearningFinishWithDate :: clear streak");
-					TemporarilyStatus.getInstance().streaks = 0;
-					TemporarilyStatus.getInstance().isCompletedToday = false;
-
-					updateUserStreaks();
 					callbackWhenDone(false);
 				}
 			});
+
 		} else {
 			Debug.Log("No user is signed in");
 			callbackWhenDone(false);
