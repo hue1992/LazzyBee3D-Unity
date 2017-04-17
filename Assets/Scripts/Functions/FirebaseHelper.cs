@@ -1577,6 +1577,8 @@ public class FirebaseHelper  {
 							callbackWhenDone(false);
 						}
 					});
+				} else {
+					callbackWhenDone(false);
 				}
 			});
 

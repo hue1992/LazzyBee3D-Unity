@@ -328,6 +328,10 @@ public class HomeController : MonoBehaviour
 		}
 	}
 
+	public void showDialogNowordToLearnFromStudyScene () {
+		showDialogNoWordToLearn();
+	}
+
 	/************ Dialog message ************/
 	/*
 	enum DIALOG_TAG_NAME {
