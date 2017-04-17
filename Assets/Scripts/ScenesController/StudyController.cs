@@ -279,7 +279,7 @@ public class StudyController : MonoBehaviour, IScenesController
 								Debug.Log("Study Controller :: ScriptHolder found");
 								HomeController homeController = gObj.GetComponent<HomeController>();
 
-								homeController.completedDailyTargetHandle();
+									homeController.completedDailyTargetHandle(isStreak);
 							}
 						}
 
